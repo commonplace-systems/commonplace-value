@@ -7,9 +7,35 @@ prevent, and no structural check can see it.
 ```text
 conformance/
 ├── canonical/        RFC 8785 canonicalization vectors  (imported, §19.1)
-├── valid-values/     portable-value acceptance vectors  (this repo's, to come)
-└── invalid-values/   rejection vectors with reason slugs (this repo's, to come)
+├── valid-values/     positive vectors filling §19.1 gaps (ours)
+├── invalid-values/   rejection vectors with reason slugs (ours, §19.2)
+└── differential/     bytes emitted by commonplace-log's JCS (§18)
 ```
+
+### ⛔ EACH DIRECTORY HAS ITS OWN DOOR, AND USING THE WRONG ONE COSTS A FALSE FAILURE
+
+| directory | inputs are | read them with |
+| --- | --- | --- |
+| `canonical/` | **deliberately NON-canonical** | permissive `JSON.decode/1` **+ `new/2`** |
+| `valid-values/` | non-canonical (whitespace, spacing) | permissive `JSON.decode/1` **+ `new/2`** |
+| `invalid-values/` | raw bytes that must be refused | **`from_canonical_json/2`** |
+| `differential/` | **canonical by construction** | **`from_canonical_json/2`** |
+
+⭐ **This is not a stylistic choice — the two doors have DIFFERENT numeric domains** and disagree on
+real inputs. §6.1 governs Elixir **integer inputs**; §6.3 governs **canonical tokens**. Measured on
+`differential/306-number-boundaries`:
+
+```text
+input:                     [1e-7,0.000001,100000000000000000000,1e+21,0.000001]
+JSON.decode + new/2   -> {:error, :integer_out_of_range}     ← §6.1, correct
+from_canonical_json/2 -> {:ok, ...}  re-encodes identically  ← §6.3, correct
+                         to_term gives the FLOAT 1.0e20
+```
+
+⚠️ **Both answers are right.** `100000000000000000000` parses to an Elixir bignum, which §6.1
+correctly refuses, and is the canonical spelling of a finite binary64, which §6.3 correctly accepts.
+⛔ **A harness that reads canonical fixtures through the construction door reports a spurious
+rejection that looks exactly like an encoder disagreement.** *(It happened here — errata **V13**.)*
 
 ⛔ **An empty directory and a passing corpus are indistinguishable to a harness that does not
 count.** Any harness reading these MUST assert a non-zero case count per directory before reporting
@@ -209,3 +235,55 @@ a harness that used the wrong one would produce a confident, wrong result.
 `commonplace-log-reducer` already holds its own canonicalizer to these bytes. ⇒ **We are now a third
 consumer.** ⛔ **Byte-rule changes here must be announced, not made.** Additions of our own belong in
 `valid-values/` and `invalid-values/`, which are ours.
+
+---
+
+## `differential/` — bytes from `commonplace-log`'s JCS, §18
+
+**12 cases.** ⭐ **Their `expected.hex` was produced by a DIFFERENT implementation** —
+`Commonplace.Log.Jcs` at `commonplace-log` `ecd329f` — run once, out of band, as an oracle.
+
+> §18: *"For every value accepted by both packages, their canonical bytes MUST match."*
+> §20.17 makes that an acceptance test.
+
+### ⛔ How this stays inside §18 and §21
+
+- **Their code never enters this repository.** The module (self-contained; `Jason` appears only in
+  its moduledoc) was copied to a scratch directory *outside* the repo, compiled there, run, and
+  discarded. **The artefact that landed is bytes, not code.**
+- **Their repository was never touched** — no `mix` ran in it, no dependency of theirs was fetched.
+- ⛔ **`commonplace-log` is not a dependency and must never become one** (§21).
+- ⭐ **Their canonicalizer is a SECOND OPINION, never the oracle of record.** §18: *"neither package
+  may infer complete substitutability from matching bytes on ordinary examples."*
+
+### ⚠️ What a future disagreement MEANS
+
+⛔ **A mismatch here is a FINDING about both packages — not an instruction to change ours.** The
+hand-verified expectations in `canonical/` and `valid-values/` stay normative. Investigate which
+implementation is wrong against RFC 8785 itself; **do not "fix" our encoder to match theirs, and do
+not quietly regenerate these fixtures to make a red run green.**
+
+### The shared domain, and what is deliberately outside it
+
+The terms cover: nesting · astral-versus-BMP key ordering · every required escape · C0 controls ·
+literal non-ASCII · the four number boundaries · safe-integer edges · integral floats and negative
+zero · empty containers · 12-deep nesting · mixed ASCII key ordering · float precision.
+
+⛔ **Integers outside ±(2^53−1) are deliberately EXCLUDED as inputs.** Their canonicalizer accepts
+them; our §6.1 refuses them as Elixir integer inputs. ⭐ **They are outside the shared domain, so
+§18's guarantee does not reach them and a fixture there would assert something neither spec
+promises.**
+
+### Verified at authoring time, with a positive control
+
+```text
+cases: 12   not agreeing: 0        VERDICT: PASS
+positive control -- key ordering switched from UTF-16 to UTF-8 in our encoder:
+cases: 12   not agreeing: 1        VERDICT: FAIL
+```
+
+⭐ **The control matters more than the result:** twelve agreements prove nothing unless the check can
+report a disagreement, and this one can.
+
+**Provenance:** oracle source sha256 `34a88979d1a975fa…`, `commonplace-log` at `ecd329f`,
+recorded 2026-08-25.
