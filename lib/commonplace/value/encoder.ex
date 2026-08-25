@@ -4,7 +4,58 @@ defmodule Commonplace.Value.Encoder do
   import Bitwise
 
   @spec encode(Commonplace.Value.Domain.normalized_term()) :: binary()
-  def encode(term), do: term |> encode_term() |> IO.iodata_to_binary()
+  def encode(term), do: term |> encode_term() |> finalize()
+
+  @doc false
+  @spec finalize(iodata()) :: binary()
+  def finalize(fragment), do: IO.iodata_to_binary(fragment)
+
+  @doc false
+  @spec scalar_fragment(nil | boolean() | number() | String.t()) :: iodata()
+  def scalar_fragment(term), do: encode_term(term)
+
+  @doc false
+  @spec scalar_fragment_with_length(nil | boolean() | number() | String.t()) ::
+          {iodata(), non_neg_integer()}
+  def scalar_fragment_with_length(term) do
+    fragment = scalar_fragment(term)
+    {fragment, IO.iodata_length(fragment)}
+  end
+
+  @doc false
+  @spec array_fragment([iodata()]) :: iodata()
+  def array_fragment(fragments), do: [?[, join(fragments), ?]]
+
+  @doc false
+  @spec array_fragment_with_overhead([iodata()]) :: {iodata(), pos_integer()}
+  def array_fragment_with_overhead(fragments) do
+    {array_fragment(fragments), 2 + max(length(fragments) - 1, 0)}
+  end
+
+  @doc false
+  @spec object_fragment([{String.t(), iodata()}]) :: iodata()
+  def object_fragment(members) do
+    {fragment, _overhead} = object_fragment_with_overhead(members)
+    fragment
+  end
+
+  @doc false
+  @spec object_fragment_with_overhead([{String.t(), iodata()}]) ::
+          {iodata(), pos_integer()}
+  def object_fragment_with_overhead(members) do
+    encoded_members =
+      members
+      |> Enum.sort_by(fn {key, _fragment} -> utf16_sort_key(key) end)
+      |> Enum.map(fn {key, fragment} ->
+        encoded_key = encode_string(key)
+        {[?\", encoded_key, ?\", ?:, fragment], IO.iodata_length(encoded_key) + 3}
+      end)
+
+    fragments = Enum.map(encoded_members, &elem(&1, 0))
+    keys_and_colons = Enum.reduce(encoded_members, 0, fn {_fragment, size}, acc -> acc + size end)
+    overhead = 2 + max(length(encoded_members) - 1, 0) + keys_and_colons
+    {[?{, join(fragments), ?}], overhead}
+  end
 
   defp encode_term(nil), do: "null"
   defp encode_term(true), do: "true"
@@ -14,18 +65,13 @@ defmodule Commonplace.Value.Encoder do
   defp encode_term(term) when is_binary(term), do: [?\", encode_string(term), ?\"]
 
   defp encode_term(term) when is_list(term) do
-    [?[, join(Enum.map(term, &encode_term/1)), ?]]
+    term |> Enum.map(&encode_term/1) |> array_fragment()
   end
 
   defp encode_term(term) when is_map(term) do
-    members =
-      term
-      |> Enum.sort_by(fn {key, _value} -> utf16_sort_key(key) end)
-      |> Enum.map(fn {key, value} ->
-        [?\", encode_string(key), ?\", ?:, encode_term(value)]
-      end)
-
-    [?{, join(members), ?}]
+    term
+    |> Enum.map(fn {key, value} -> {key, encode_term(value)} end)
+    |> object_fragment()
   end
 
   defp join([]), do: []
