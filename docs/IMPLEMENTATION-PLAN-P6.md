@@ -95,8 +95,8 @@ number.** *This brief states no count.*
 
 ### 4.1 Determinism across fresh OS processes — §20.3
 
-<!-- ARM-PLANNED: canonical bytes are identical when produced by a fresh operating system process -->
-<!-- ARM-PLANNED: the whole positive corpus encodes identically in a fresh operating system process -->
+<!-- ARM: canonical bytes are identical when produced by a fresh operating system process -->
+<!-- ARM: the whole positive corpus encodes identically in a fresh operating system process -->
 
 ⭐ **A second BEAM process in the SAME VM is not what §20.3 asks for.** The point is to defeat
 anything a single VM instance could be carrying — a hash seed, a warmed atom table, an accident of
@@ -106,9 +106,9 @@ the project root, per §3) and compare **emitted bytes**, not in-memory terms.
 
 ### 4.2 Differential bytes — §18, §20.17
 
-<!-- ARM-PLANNED: every differential case matches the bytes recorded from commonplace-log JCS -->
-<!-- ARM-PLANNED: the differential harness refuses to report green on an empty directory -->
-<!-- ARM-PLANNED: the differential harness checks at least twelve cases -->
+<!-- ARM: every differential case matches the bytes recorded from commonplace-log JCS -->
+<!-- ARM: the differential harness refuses to report green on an empty directory -->
+<!-- ARM: the differential harness checks at least twelve cases -->
 
 ⛔ **Read `conformance/README.md`'s `differential/` section before writing this.** In particular:
 **a mismatch is a FINDING about both packages, not an instruction to change ours**, and ⛔ **never
@@ -116,10 +116,10 @@ regenerate those fixtures to make a red run green.** If your harness disagrees, 
 
 ### 4.3 The boundary proof — §17, §20.14
 
-<!-- ARM-PLANNED: a router accepting only constructed values refuses an ordinary term -->
-<!-- ARM-PLANNED: local pass through and encoded round trip deliver equal values -->
-<!-- ARM-PLANNED: a pid cannot reach the receiver through the value API -->
-<!-- ARM-PLANNED: a function or reference cannot reach the receiver through the value API -->
+<!-- ARM: a router accepting only constructed values refuses an ordinary term -->
+<!-- ARM: local pass through and encoded round trip deliver equal values -->
+<!-- ARM: a pid cannot reach the receiver through the value API -->
+<!-- ARM: a function or reference cannot reach the receiver through the value API -->
 
 ⭐ **§17's local fast path is the interesting half:** a router **MAY** pass the opaque value without
 physically serializing it, and *"its meaning remains exactly the value that `encode/1` would
@@ -133,8 +133,8 @@ about hostile code. **Say so in the test module's docstring.**
 
 ### 4.4 Dependency hygiene — §20.18, §21
 
-<!-- ARM-PLANNED: the application declares no runtime dependency outside the standard library -->
-<!-- ARM-PLANNED: no module under lib references a higher Commonplace layer -->
+<!-- ARM: the application declares no runtime dependency outside the standard library -->
+<!-- ARM: no module under lib references a higher Commonplace layer -->
 
 ⭐ **Make the second one a real scan of `lib/`, counting what it searched**, not a grep whose zero
 could mean "wrong path". ⚠️ *A grep against a path that does not exist returns 0 hits and looks
@@ -142,8 +142,8 @@ exactly like a confirmed absence — assert the corpus was non-empty first.*
 
 ### 4.5 Anti-vacuity across ALL FOUR directories — §19.3, §20.20
 
-<!-- ARM-PLANNED: every conformance directory is scanned by some harness -->
-<!-- ARM-PLANNED: each deliberate fixture is observed producing the outcome that fails a broken harness -->
+<!-- ARM: every conformance directory is scanned by some harness -->
+<!-- ARM: each deliberate fixture is observed producing the outcome that fails a broken harness -->
 
 ⭐ **There are now THREE deliberate fixtures and they are not all the same shape:**
 
