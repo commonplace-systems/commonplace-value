@@ -55,7 +55,22 @@ cur=$(git branch --show-current)
 [ "$(git rev-parse --git-dir)" = ".git" ] || { echo "REFUSED: this is a linked worktree, not the main checkout." >&2; exit 64; }
 git rev-parse --verify -q "$branch" >/dev/null || { echo "REFUSED: no branch $branch" >&2; exit 65; }
 before=$(git rev-parse HEAD)
-git merge --no-ff -q "$branch" -m "Merge branch '$branch'"
+# ⛔ A CONFLICTING MERGE IS A THIRD RESIDUE STATE, and until 2026-08-25 this
+# script exited on it under `set -e` with NO MESSAGE AT ALL, leaving a conflicted
+# merge in progress. Two states were already named -- pushed, and merged-but-not-
+# pushed. This one is worse than both: the tree is mid-merge, `git status` is the
+# only evidence, and a reader who saw the script "do nothing" would reasonably
+# retry. ⭐ If a script can leave the repository in a state, it must be able to
+# SAY which one.
+# ⚠️ Resolve on the BRANCH, not here: merge origin/main into the round branch,
+# fix it there, push, and land again. That keeps this script the only path to main.
+if ! git merge --no-ff -q "$branch" -m "Merge branch '$branch'"; then
+  echo "REFUSED: merging $branch into main CONFLICTED; nothing gated, nothing pushed." >&2
+  echo "REFUSED: a conflicted merge is IN PROGRESS in this checkout." >&2
+  echo "REFUSED: abort it with:  git merge --abort" >&2
+  echo "REFUSED: then resolve on the branch:  git checkout $branch && git merge origin/main" >&2
+  exit 68
+fi
 mix deps.get >/dev/null 2>&1 || true
 # Gates capture their own exit status. Earlier form was `gate | tail -1`, which
 # is a gate ONLY while `pipefail` is set -- commonplace-value measured (2026-08-25)
