@@ -377,3 +377,40 @@ and this entry is where that is recorded.
 
 ⚠️ **Operational note:** probing this allocated ~6 GiB on a shared host. Worth knowing before anyone
 repeats it.
+
+---
+
+## V12 — ⛔ TWICE IN ONE SESSION, `git reset --hard` DESTROYED MY OWN UNCOMMITTED WORK
+
+**Committed by:** commonplace-value (Opus), 2026-08-25. Recorded because it happened **twice**, and
+the second time was after writing the first rule down.
+
+`docs/STATE.md` §4 row (b) says *never `git checkout --` / `reset` / `stash` in the **Sol
+worktree**.* ⛔ **The scope was wrong. The hazard is not the worktree — it is the command.** Both
+losses were in the **main checkout**, in the cleanup tail of a compound command demonstrating a fix:
+
+| # | what was lost | how |
+| --- | --- | --- |
+| 1 | the conflicted-merge fix | committed together with a throwaway, then `git reset --hard HEAD~1` dropped both |
+| 2 | the `--rm-self` fix (uncommitted) | three `git checkout`s failed, so a later `git reset --hard $MB` ran **on the branch I was still on** |
+
+⭐ **Loss 2 is the instructive one: three commands failed loudly, and the destructive one at the end
+of the same compound command ran anyway.** Under a `&&`-free sequence, an early failure does not
+stop the tail. ⚠️ **A cleanup line written for the success path executes on the failure path too.**
+
+Recovered both times from `git reflog` — which works only for *committed* work. Loss 2's fix was
+uncommitted and had to be rewritten from scratch.
+
+### The fix is not a rule, it is where the demonstration runs
+
+⭐ **`bin/check-landing-refuses.sh` is hermetic and has never cost anything. The hand demonstrations
+it replaces cost work twice.** Same property, same evidence, different blast radius — the difference
+is entirely that one builds a scratch repository and the other operates on the live one.
+
+⇒ **The conflicted-merge property is now the third arm of that gate**, built in a scratch repo with
+its own bare origin, asserting rc 68, origin unchanged, and all four refusal lines. Its own red arm
+is demonstrated by mutating `exit 68` to `exit 0`.
+
+⛔ **THE STANDING RULE, corrected in scope:** *demonstrate a repository property in a SCRATCH
+repository, never in this one.* A demonstration that can destroy the thing it is demonstrating about
+is not a safer version of a test — it is a worse one.
