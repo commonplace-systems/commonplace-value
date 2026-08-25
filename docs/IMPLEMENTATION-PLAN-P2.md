@@ -179,7 +179,7 @@ Generators go in `test/support/`; bound them so the suite stays fast.
 
 ### 6.7 ⛔ NOT THIS ROUND — leave as `ARM-PLANNED`
 
-<!-- ARM-PLANNED: construction rejects a term whose canonical bytes exceed max_bytes -->
+<!-- ARM: construction rejects a term whose canonical bytes exceed max_bytes -->
 
 §13 rule 1 needs the encoder. **P3.**
 
