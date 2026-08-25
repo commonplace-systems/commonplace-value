@@ -35,15 +35,25 @@ set -euo pipefail
 # repository and act on it. An argument cannot leak into a grandchild; ambient
 # state can. Measured: the real repo's main and origin/main are byte-unchanged
 # across a full run of the gate-on-the-gate.
-root=""
-if [ "${1:-}" = "--root" ]; then root="${2:?--root needs a path}"; shift 2; fi
+root=""; rm_self=0
+while :; do
+  case "${1:-}" in
+    --root)    root="${2:?--root needs a path}"; shift 2 ;;
+    # ⛔ THE PRIVATE COPY IDENTIFIES ITSELF WITH A FLAG. The first version inferred
+    # it from a path prefix -- `case "$0" in /tmp/*)` -- and DELETED A CALLER-SUPPLIED
+    # SCRIPT the first time one was run from a /tmp path. ⭐ "It looks like mine" is
+    # not "it is mine": a heuristic that decides what to DELETE will eventually be
+    # right about the pattern and wrong about the file.
+    --rm-self) rm_self=1; shift ;;
+    *) break ;;
+  esac
+done
 if [ -z "$root" ]; then
   root="$(cd "$(dirname "$0")/.." && pwd)"
   self_copy="$(mktemp)"; cat "$0" > "$self_copy"
-  exec bash "$self_copy" --root "$root" "$@"
+  exec bash "$self_copy" --root "$root" --rm-self "$@"
 fi
-# Reached only in the re-executed copy: remove it once bash has finished reading.
-case "$0" in /tmp/*) trap 'rm -f "$0"' EXIT ;; esac
+[ "$rm_self" -eq 1 ] && trap 'rm -f "$0"' EXIT
 
 branch="${1:?round branch, e.g. sol/phase-6}"
 cd "$root"
@@ -55,7 +65,22 @@ cur=$(git branch --show-current)
 [ "$(git rev-parse --git-dir)" = ".git" ] || { echo "REFUSED: this is a linked worktree, not the main checkout." >&2; exit 64; }
 git rev-parse --verify -q "$branch" >/dev/null || { echo "REFUSED: no branch $branch" >&2; exit 65; }
 before=$(git rev-parse HEAD)
-git merge --no-ff -q "$branch" -m "Merge branch '$branch'"
+# ⛔ A CONFLICTING MERGE IS A THIRD RESIDUE STATE, and until 2026-08-25 this
+# script exited on it under `set -e` with NO MESSAGE AT ALL, leaving a conflicted
+# merge in progress. Two states were already named -- pushed, and merged-but-not-
+# pushed. This one is worse than both: the tree is mid-merge, `git status` is the
+# only evidence, and a reader who saw the script "do nothing" would reasonably
+# retry. ⭐ If a script can leave the repository in a state, it must be able to
+# SAY which one.
+# ⚠️ Resolve on the BRANCH, not here: merge origin/main into the round branch,
+# fix it there, push, and land again. That keeps this script the only path to main.
+if ! git merge --no-ff -q "$branch" -m "Merge branch '$branch'"; then
+  echo "REFUSED: merging $branch into main CONFLICTED; nothing gated, nothing pushed." >&2
+  echo "REFUSED: a conflicted merge is IN PROGRESS in this checkout." >&2
+  echo "REFUSED: abort it with:  git merge --abort" >&2
+  echo "REFUSED: then resolve on the branch:  git checkout $branch && git merge origin/main" >&2
+  exit 68
+fi
 mix deps.get >/dev/null 2>&1 || true
 # Gates capture their own exit status. Earlier form was `gate | tail -1`, which
 # is a gate ONLY while `pipefail` is set -- commonplace-value measured (2026-08-25)

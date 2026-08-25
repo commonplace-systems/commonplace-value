@@ -55,15 +55,21 @@ build_scratch() {  # build_scratch <gate-command>
   # Substitute EVERY gate line with the controllable probe, and drop the
   # mix-specific line that has no meaning in a scratch repo.
   sed -e "s|^gate .*|gate \"probe\" $1|" -e '/^mix deps.get/d' "$OLDPWD/$SCRIPT" > bin/land-round.sh
-  echo seed > seed.txt; git add -A; git commit -qm seed
+  echo seed > seed.txt; echo shared > shared.txt; git add -A; git commit -qm seed
   git remote add origin "$T/origin.git"; git push -q -u origin main
   git checkout -q -b feature; echo work > work.txt; git add -A; git commit -qm work
   git checkout -q main
+  if [ "${2:-}" = "conflict" ]; then
+    # Both sides rewrite the same line -> the merge cannot succeed.
+    git checkout -q feature; echo from-feature > shared.txt; git commit -qam feature-side
+    git checkout -q main;    echo from-main    > shared.txt; git commit -qam main-side
+    git push -q origin main
+  fi
   cd - >/dev/null
 }
 
-run_arm() {  # run_arm <gate-command>; echoes "<rc> <origin-before> <origin-after>"
-  build_scratch "$1"
+run_arm() {  # run_arm <gate-command> <label> [conflict]; echoes "<rc> <before> <after>"
+  build_scratch "$1" "${3:-}"
   local before after rc
   before=$(git -C "$T/repo" rev-parse origin/main)
   # ⛔ NO --root, and no inherited root: the scratch copy must resolve its own
@@ -99,10 +105,28 @@ else
 fi
 grep -q '^LANDED:' "$T/out.green" || { echo "  FAIL GREEN no LANDED verdict"; fail=1; }
 
+# ── CONFLICT ARM: the merge itself fails ──────────────────────────────────────
+# ⛔ THE THIRD RESIDUE STATE. Before 2026-08-25 this exited under `set -e` with NO
+# OUTPUT, leaving a conflicted merge in progress. It was found by hitting it for
+# real while landing round P2, and the hand demonstration of the fix cost two
+# rounds of lost work in the live repository. ⭐ THAT IS WHY IT IS AN ARM HERE:
+# this file is hermetic and has never cost anything, and the hand demonstrations
+# it replaces cost something twice.
+read -r rc before after <<< "$(run_arm true conflict conflict)"
+if [ "$rc" -eq 68 ] && [ "$before" = "$after" ]; then
+  echo "  ok   CONF  conflicting merge -> rc 68, scratch origin unchanged"
+else
+  echo "  FAIL CONF  expected rc 68 with origin unchanged; got rc $rc, ${before:0:7} -> ${after:0:7}"
+  sed 's/^/         | /' "$T/out.conflict"; fail=1
+fi
+for want in 'CONFLICTED' 'IN PROGRESS' 'git merge --abort' 'resolve on the branch'; do
+  grep -qF -- "$want" "$T/out.conflict" || { echo "  FAIL CONF  refusal text missing: $want"; fail=1; }
+done
+
 echo "---"
 echo "gate invocations substituted: $n_gates"
 if [ "$fail" -eq 0 ]; then
-  echo "VERDICT: PASS -- a failing gate never reaches git push; passing gates do."
+  echo "VERDICT: PASS -- failing gate and conflicting merge both refuse; passing gates push."
   exit 0
 fi
 echo "VERDICT: FAIL -- the landing script's refusal property is broken." >&2
