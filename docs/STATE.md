@@ -1,0 +1,201 @@
+# STATE — commonplace-value
+
+Owner: the Opus toplevel in tmux window `commonplace-value`.
+Implementers: Sol, one round per tmux pane (ruling #25).
+
+---
+
+## 0. What this package is
+
+`docs/proposals/2026-08-24-commonplace-value-spec.md` — jes's spec, 643 lines, committed
+byte-identical at `aac51f9`, sha256 `1ac9a437…`. **It is never edited.** Amendments go in
+`docs/spec-errata.md`.
+
+Its central guarantee, quoted: *a successfully constructed `Commonplace.Value` is inert,
+JSON-equivalent data with one deterministic RFC 8785 canonical byte representation.*
+
+⭐ **The conformance corpus is the product, not the decoration.** A value that passes every
+structural check and encodes to different bytes on two machines is the exact defect this package
+exists to prevent — and structural checks cannot see it.
+
+---
+
+## 1. ⛔ THE CLAIM DISCIPLINE, adopted before the first line of code
+
+Adopted from `commonplace-doc-sync`'s HANDOFF §3 while it is still free.
+
+> - **`docs/proposals/*` and `docs/spec-errata.md` state DESIGN claims only.**
+> - ⛔ **A statement about what the CODE does MUST cite a test by name**, or it does not belong in
+>   those files.
+> - ⚠️ **Nothing in this repo may say "implemented" without naming the arm that would go red.**
+
+**Filed, not remembered.** The carrier is `bin/check-plan-arms.sh`:
+
+| marker (an HTML comment holding the keyword and a value) | meaning | gate behaviour |
+| --- | --- | --- |
+| `ARM:` + the exact test-name substring | a claim about LANDED code | **FAILS** if no `test "…"` matches |
+| `ARM-PLANNED:` + the exact test name | a contract on a FUTURE round | reported, does **not** fail |
+| `MODULE:` + `Full.Module.Name` | this module is declared in a plan | **FAILS** on any undeclared module in `lib/` |
+
+⛔ **This table deliberately does NOT spell the markers out.** The gate greps `docs/` for the literal
+comment syntax, so **prose describing a marker becomes a marker** — on its first run this file
+contributed a phantom arm named `exact test name substring` and the gate went red on correct state.
+⭐ **Documentation about a gate is inside that gate's corpus.** Spell markers only in plans, where
+they are meant.
+
+⭐ **The `ARM:` marker IS the code claim.** A round's first done-step is to promote its
+`ARM-PLANNED` markers to `ARM`, which turns the worktree's gate **red with N missing**. The round is
+done when it is green *because the tests exist under those names*.
+
+⭐ **`MODULE:` exists because an enumeration is satisfiable by anything not on the list.** Two sibling
+repos found unbriefed Sol machinery within an hour. "Out of scope: A, B, C" is a denylist; "every
+module in `lib/` is declared in a plan" is a property.
+
+---
+
+## 2. Gates in this repo, and the state each has been SEEN in
+
+⭐ **A gate never seen fail is not known to work; one that fires on correct state is worse than no
+gate.** Every row below must have both arms demonstrated before it is trusted.
+
+| gate | green demonstrated | red demonstrated |
+| --- | --- | --- |
+| `bin/check-spec-pristine.sh` | ✅ 2026-08-25T03:4xZ — `VERDICT: PRISTINE` on the committed spec | ✅ 2026-08-25T03:4xZ — `bin/mutate.sh docs/proposals/…spec.md '1a\INJECTED' -- bash bin/check-spec-pristine.sh` → `VERDICT: CHANGED`, rc=1, file restored |
+| `bin/check-plan-arms.sh` | see `docs/IMPLEMENTATION-PLAN-P1.md` §Gate demonstrations | idem |
+| `bin/check-plan-arms.sh --self-test` | ditto | ditto |
+| `bin/land-round.sh` refusals | ditto | ditto |
+
+⛔ **Never pipe a gate into `tail`/`head` from a shell without `pipefail`** — the pipeline's exit
+status becomes `tail`'s and the verdict is read as 0. `bin/land-round.sh` sets `set -euo pipefail`,
+which is what makes its `… | tail -1` lines gates rather than decoration. **That is load-bearing:
+delete `pipefail` and every gate in the landing script silently becomes ornamental.**
+
+---
+
+## 3. How a round happens here
+
+Recipe from `commonplace-doc` (msg 15851) and `commonplace-doc-sync` (msg 15852), unchanged.
+Ceremony: `~/boss-clod/DISPATCH-CEREMONY.md` §1–§7. Briefing rules: `~/commonplace-doc/docs/BRIEFING-SOL.md`.
+
+```bash
+N=1                                      # round number
+D=/home/jes/sol-value-p$N
+mkdir -p $D
+git worktree add $D/wt -b sol/phase-$N HEAD && git push -u origin sol/phase-$N
+# prime on the HOST — there is no egress inside the fence
+cd $D/wt && mix deps.get && MIX_ENV=test mix compile && mix test
+# write $D/prompt.txt (>= 100 words, MUST contain the literal string "phase N")
+cd /home/jes/commonplace-value && bash bin/dispatch-round.sh $D "phase $N"
+# wait BY CAPTURED PID — never pgrep -f, it matches your own shell
+until ! kill -0 $(cat $D/outer.pid) 2>/dev/null; do sleep 15; done
+```
+
+`dispatch-round.sh` REFUSES on: no worktree · empty/short prompt · prompt not naming the round ·
+HEAD on no remote ref · dirty tree. It verifies **both fence layers on the running pid** (tmpfs mask
+count in `/proc/<pid>/mountinfo`, and `-C <wt>` in the cmdline — the `-C` is the write fence) and
+writes `outer.pid`.
+
+**Landing:**
+
+```bash
+cd /home/jes/commonplace-value          # cwd persists between tool calls; cd fresh
+bash bin/land-round.sh sol/phase-$N
+```
+
+Refuses unless run from the **main checkout on main**. Merges `--no-ff`, runs `mix test`, both
+gates, pushes, and **its verdict is what `origin` says**. ⭐ **My own commits go the same way:
+branch → `land-round.sh`.** There is no other path to `main`.
+
+---
+
+## 4. Traps already paid for by others — do not re-buy them
+
+| # | trap | the tell |
+| --- | --- | --- |
+| a | **Sol usually CANNOT commit** — `.git` is read-only in the fence | `0 commits` ≠ failed round. **Judge by `git -C $wt diff`**, then commit on Sol's behalf |
+| b | ⛔ **Never `git checkout --` / `reset` / `stash` in the Sol worktree** | it erases the round's uncommitted work. Use `bin/mutate.sh` for every mutation |
+| c | **No egress inside the fence** | prime deps on the host first; brief Sol to STOP with headline `compile blocked in fence` |
+| d | **Sibling deps as DETACHED worktree pins** `~/<repo>-pin-<sha>` | never a live checkout. `bin/pin-in-use.sh` before removing one |
+| e | ⛔ **`pgrep -f` / `pkill -f` matches your own argv** | a waiter built that way waits for itself forever. **Wait and kill by captured PID** |
+| f | **Merging from inside the worktree "lands" nothing** | every command succeeds and the sentence is false. `land-round.sh` refuses |
+| g | ⛔ **`git diff` does not contain new files** | an empty diff for a property living in an untracked test file is a method artifact |
+| h | **Before trusting a zero, prove the corpus was non-empty** | `apps/*/lib` matches 0 files; git's `*` does not cross `/` |
+
+⭐ **Anything measured inside the fence inherits the fence as a fact.** Masked paths, absent
+credentials and denied egress surface as *ordinary negative findings with plausible mechanisms
+attached*. Before briefing sandboxed work: **could the fence produce this result?** If yes the task
+is not awkward in there, it is **unassignable** in there.
+
+✅ **For this package that risk is unusually low: `commonplace_value` has ZERO runtime deps** (see
+§5). A pure value package is the best case for the fence — it can produce no false finding about
+network, credentials, or a live store.
+
+---
+
+## 5. MEASURED facts about the toolchain (2026-08-25, run on this host)
+
+Each line is a command I ran, not a belief. `elixir 1.18.4 / OTP 27`, pinned in `.tool-versions`.
+
+| measured | value | consequence for the spec |
+| --- | --- | --- |
+| `Code.ensure_loaded?(JSON)` | `true` | stdlib `JSON` is available; **zero runtime deps needed** |
+| `JSON.encode!(1.0)` | `"1.0"` | ⛔ **not JCS.** JCS/§10.6 requires `1` |
+| `JSON.encode!(1.0e21)` | `"1.0e21"` | ⛔ **not ECMAScript.** RFC 8785 requires `1e+21` |
+| `JSON.encode!(<<0x1F>>)` | `"\"\\u001F\""` | ⛔ **uppercase hex.** §10.9 requires lowercase `\u001f` |
+| `Float.to_string(1.0e21)` | `"1.0e21"` | ⛔ Erlang spelling, not ECMAScript |
+| `:erlang.float_to_binary(f, [:short])` | shortest round-trip digits | ✅ **reusable as the DIGITS**, then reformatted to ECMAScript layout |
+
+⭐ **THE CONSEQUENCE, and it is the round-3 headline: `JSON.encode!/1` CANNOT BE THE CANONICAL
+ENCODER.** It is wrong on numbers *and* on escape case. The encoder is written from scratch;
+`JSON.decode/1` is used only as the parser component §21 permits.
+
+| measured | value | consequence |
+| --- | --- | --- |
+| `JSON.decode("1 ")` | `{:ok, 1}` | ⛔ **trailing whitespace accepted by the parser.** `:trailing_data` must be caught by §11.6's re-encode byte gate, not by the parser |
+| `JSON.decode(~s({"a":1,"a":2}))` | `{:ok, %{"a" => 1}}` | ⛔ **duplicate keys silently collapse.** §11.6 catches it because re-encoding is shorter — **that is the clause doing the work, and it looks removable** |
+| `JSON.decode("123456789012345678901234567890")` | `{:ok, 123456789012345678901234567890}` | ⛔ **arbitrary-precision integer, NOT binary64.** §6.3's binary64 semantics must be applied by US, over the parser's output |
+| `JSON.decode("-0")` | `{:ok, 0}` | the parser loses the sign; §6.3 rejects `-0` anyway via the re-encode gate |
+| `JSON.decode("1e400")` | `{:error, {:unexpected_sequence, 0, "1.0e400"}}` | ✅ non-finite tokens do not reach us as floats |
+| `JSON.decode(<<0xEF,0xBB,0xBF,?1>>)` | `{:error, {:invalid_byte, 0, 239}}` | ✅ BOM rejected by the parser |
+| `JSON.decode(<<?",0xFF,?">>)` | `{:error, {:invalid_byte, 1, 255}}` | ✅ malformed UTF-8 rejected by the parser |
+
+⚠️ **Three of those rows are the same shape: the parser is more permissive than the spec, and the
+only thing standing between that permissiveness and a wrong `{:ok, …}` is §11 clause 6.** Its stated
+justification ("re-encoding must reproduce the input") is smaller than the job it does.
+
+---
+
+## 6. Inherited assets — data, never code
+
+`~/commonplace-log/conformance/canonical-json/` holds 19 language-neutral JCS cases as
+`input.json` (raw bytes) + `expected.hex` (lowercase hex of the canonical output), including the
+tripwires this spec names by hand:
+
+`004-sort-astral-before-e000` · `009-num-1e20` · `010-num-1e21` · `011-num-1e-6` · `013-num-1e-7` ·
+`014-num-minus-zero` · `015-num-max-safe-int` · `018-float-spelled-integers` ·
+**`999-deliberate-mismatch`** (the §19.3 anti-vacuity fixture, already built).
+
+⛔ **§18 is explicit: copy the VECTORS, never import `Commonplace.Log.Jcs` as the implementation, and
+never compare an implementation against itself.** `commonplace-log`'s canonicalizer is a
+**differential oracle over fixtures only** (round 5), not a dependency — §21 forbids the dep outright.
+
+---
+
+## 7. Round map
+
+| round | delivers | spec |
+| --- | --- | --- |
+| **P1** | value domain: validation, numeric normalization, UTF-8, RFC 6901 paths, structured errors | §5 §6.1 §6.2 §7 §15 |
+| **P2** | resource-limit accounting at one-below / exact / one-above, depth-before-work, property generators | §13 §19.2 |
+| **P3** | RFC 8785 encoder, the opaque struct, `new/2` + `encode/1`, `max_bytes`, imported positive corpus, anti-vacuity harness | §9 §10 §13.1 §19.1 §19.3 |
+| **P4** | canonical decoding, the re-encode byte gate, `to_term/1` + `equal?/2`, negative corpus | §11 §12 §19.2 |
+| **P5** | boundary proof, cross-process determinism, differential byte check vs `Commonplace.Log.Jcs` over fixtures | §17 §18 §20.3 §20.17 |
+
+⚠️ **DEVIATION FROM SPEC §23, stated rather than smuggled.** §23 puts *"opaque type and bounded
+inspection"* in phase 1. It cannot go there: §9 makes **canonical bytes the identity-bearing
+representation** and §13.1 measures `max_bytes` **on canonical bytes**, so no honest
+`%Commonplace.Value{}` can exist before the encoder does. Shipping a half-built struct in P1 would
+create exactly the artifact the claim discipline in §1 exists to prevent — a public API that looks
+implemented. ⇒ **P1/P2 deliver `Commonplace.Value.Domain` as an INTERNAL module; the public API of
+§14 lands whole in P3.** This is a design claim; it is recorded here and in `docs/spec-errata.md`,
+never by editing the spec.
