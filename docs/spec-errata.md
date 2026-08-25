@@ -116,3 +116,73 @@ safe integer range becomes an Elixir integer; `-0.0` becomes `0`.
 before the encoder exists (V1). ⇒ **The arms `domain normalizes negative zero to positive zero` and
 `domain normalizes an integral float to an integer` are the record of this choice**; if it is ever
 revisited, those two go red rather than the change passing silently.
+
+---
+
+## V6 — ⚠️ OPEN QUESTION: there is no way to compose an already-constructed value
+
+**Raised by:** commonplace-value (Opus), 2026-08-25, on evidence from `commonplace-cell`.
+**Kind:** ⛔ **gap, not a decision. Routed to jes; NOT resolved here.**
+
+`%Commonplace.Value{}` is a struct. §5.1 rejects structs and §5.2 forbids converting structs to
+maps, and **the spec contains no carve-out for this package's own opaque type** — grepped, there is
+none. Therefore:
+
+```elixir
+{:ok, args} = Commonplace.Value.new(%{"x" => 1})
+Commonplace.Value.new(%{"arguments" => args})   # => {:error, :struct_not_allowed}
+```
+
+⇒ **Composition costs a full re-walk per nesting.** A consumer holding N validated sub-values and
+building one envelope must `to_term/1` each and re-validate the whole term.
+
+**Measured cost, supplied by `commonplace-cell`** (their §10 request envelope, `max_proofs` 16,
+`max_envelope_bytes` 1 MiB): `1 (envelope) + 1 (arguments) + P (proofs, P ≤ 16) + 1 (extensions)`
+walks at construction — where a composition constructor would need one. They judged this acceptable
+for their MVP and chose the re-walk explicitly: *"I'd rather re-walk than take an unchecked
+composition door."*
+
+⛔ **WHY NOTHING IS BEING ADDED HERE.** An unchecked composition door is exactly how a PID reaches a
+receiver inside a value that "was already validated" — §16's guarantee is that a constructed value is
+**inert**, and that guarantee is only as good as the weakest constructor. Adding a fast path is a
+**spec** change and jes's to make.
+
+⭐ **AND IF IT IS EVER GRANTED, `commonplace-cell` named the constraint that must survive it:** the
+receiving side of a Cell boundary must still perform a full walk, because **the sender's validation
+is a claim, not a proof**. A composition constructor is a same-process optimization and must never
+be reachable from decoded bytes.
+
+---
+
+## V7 — `:non_finite_number` is unreachable on OTP 27, MEASURED
+
+**Measured by:** commonplace-value (Opus), 2026-08-25, nine construction routes with a positive
+control. Independently found first by the Sol implementer of round P1, which left the arm RED rather
+than faking it.
+
+§5.1 requires NaN and infinities rejected and §15 lists `:non_finite_number` as a reason. §19.2
+already hedges — *"NaN and infinities where the runtime can construct them"* — and on this runtime it
+**cannot**. Every route refused, while a finite float through the same channel succeeded:
+
+| route | result |
+| --- | --- |
+| `<<f::float-64>> = <<0x7FF0000000000000::64>>` | `MatchError` |
+| `:erlang.binary_to_term(<<131,70, 7ff0…>>)` | `ArgumentError` |
+| `1.0e308 * 10` · `0.0/0.0` · `1.0/0.0` · `:math.log(0.0)` | `ArithmeticError` |
+| `:erlang.list_to_float(~c"inf")` · `:erlang.binary_to_float("inf")` | `ArgumentError` |
+| **control:** `<<0x3FF0000000000000::64>>`, `binary_to_term(1.0)`, `binary_to_float("1.0")` | ✅ **all yield `1.0`** |
+
+⇒ **The `:non_finite_number` guard in `Commonplace.Value.Domain` is defensive and unreachable from
+`validate/1` on OTP 27.** It stays: §15 requires the reason, and P4's decoder is a second entry point
+whose reachability must be re-measured there, not assumed from here.
+
+⛔ **The arm `domain rejects NaN and positive and negative infinity with :non_finite_number` was
+RETIRED**, because no honest test can drive it and a green one would have to fake the input.
+⭐ **It is replaced by an arm that pins the PREMISE instead** —
+`OTP rejects NaN and infinities before they can become domain inputs` — which carries the finite
+positive control first, so the arm cannot pass by being blind. Both of its own arms demonstrated:
+swapping one "non-finite" bit pattern for a finite one turns it red, and breaking the positive
+control turns it red.
+
+⚠️ **This is the difference between "the guard was tested" and "the guard cannot be tested, and here
+is why."** Only the second is true, and only the second survives someone deleting the guard.

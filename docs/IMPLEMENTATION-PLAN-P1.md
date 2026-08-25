@@ -130,10 +130,10 @@ to avoid.
 ### 6.1 Limits validation — spec §13 rules 5 and 6
 
 <!-- ARM: default limits match the specification table -->
-<!-- ARM-PLANNED: limits validation accepts the default limit set -->
-<!-- ARM-PLANNED: limits validation rejects a zero or negative bound with :invalid_limits -->
-<!-- ARM-PLANNED: limits validation rejects a non-integer bound with :invalid_limits -->
-<!-- ARM-PLANNED: limits validation rejects :infinity for any bound with :invalid_limits -->
+<!-- ARM: limits validation accepts the default limit set -->
+<!-- ARM: limits validation rejects a zero or negative bound with :invalid_limits -->
+<!-- ARM: limits validation rejects a non-integer bound with :invalid_limits -->
+<!-- ARM: limits validation rejects :infinity for any bound with :invalid_limits -->
 
 ⭐ **The green arm is the one that gets forgotten.** §13's rules mostly *permit*; a validator that
 rejects every limit set passes all three negative arms. `limits validation accepts the default limit
@@ -141,34 +141,34 @@ set` is why the first arm above is not decoration.
 
 ### 6.2 RFC 6901 pointers — spec §15
 
-<!-- ARM-PLANNED: pointer for the top level value is the empty string -->
-<!-- ARM-PLANNED: pointer uses decimal segments for array indices -->
-<!-- ARM-PLANNED: pointer escapes tilde as ~0 and slash as ~1 in object keys -->
+<!-- ARM: pointer for the top level value is the empty string -->
+<!-- ARM: pointer uses decimal segments for array indices -->
+<!-- ARM: pointer escapes tilde as ~0 and slash as ~1 in object keys -->
 
 ⚠️ RFC 6901 order matters: `~` is escaped **before** `/`. A key `a~/b` renders `a~0~1b`, not
 `a~01b`. **Write that exact key as the test input** — the two implementations differ only on it.
 
 ### 6.3 The accepted domain — spec §5
 
-<!-- ARM-PLANNED: domain accepts nil and true and false -->
-<!-- ARM-PLANNED: domain accepts a UTF-8 string including astral plane characters -->
-<!-- ARM-PLANNED: domain accepts an empty list an empty map and an empty string key -->
-<!-- ARM-PLANNED: domain accepts nested lists and maps recursively -->
+<!-- ARM: domain accepts nil and true and false -->
+<!-- ARM: domain accepts a UTF-8 string including astral plane characters -->
+<!-- ARM: domain accepts an empty list an empty map and an empty string key -->
+<!-- ARM: domain accepts nested lists and maps recursively -->
 
 ### 6.4 The rejected categories — spec §5.1, each with its reason AND its path
 
-<!-- ARM-PLANNED: domain rejects an atom other than nil true false with :atom_not_allowed -->
-<!-- ARM-PLANNED: domain rejects a tuple with :tuple_not_allowed -->
-<!-- ARM-PLANNED: domain rejects a struct with :struct_not_allowed -->
-<!-- ARM-PLANNED: domain rejects a struct that derives the JSON encoder protocol -->
-<!-- ARM-PLANNED: domain rejects a pid a reference and a port with :runtime_reference_not_allowed -->
-<!-- ARM-PLANNED: domain rejects a function with :unsupported_term -->
-<!-- ARM-PLANNED: domain rejects an improper list with :improper_list -->
-<!-- ARM-PLANNED: domain rejects a map with a non-string key with :non_string_key -->
-<!-- ARM-PLANNED: domain rejects a non-UTF-8 binary with :invalid_utf8 -->
-<!-- ARM-PLANNED: domain rejects a non-UTF-8 object key with :invalid_utf8 -->
-<!-- ARM-PLANNED: domain rejects a bitstring that is not a binary -->
-<!-- ARM-PLANNED: domain reports the exact path of a deeply nested rejected term -->
+<!-- ARM: domain rejects an atom other than nil true false with :atom_not_allowed -->
+<!-- ARM: domain rejects a tuple with :tuple_not_allowed -->
+<!-- ARM: domain rejects a struct with :struct_not_allowed -->
+<!-- ARM: domain rejects a struct that derives the JSON encoder protocol -->
+<!-- ARM: domain rejects a pid a reference and a port with :runtime_reference_not_allowed -->
+<!-- ARM: domain rejects a function with :unsupported_term -->
+<!-- ARM: domain rejects an improper list with :improper_list -->
+<!-- ARM: domain rejects a map with a non-string key with :non_string_key -->
+<!-- ARM: domain rejects a non-UTF-8 binary with :invalid_utf8 -->
+<!-- ARM: domain rejects a non-UTF-8 object key with :invalid_utf8 -->
+<!-- ARM: domain rejects a bitstring that is not a binary -->
+<!-- ARM: domain reports the exact path of a deeply nested rejected term -->
 
 ⭐ **§20.13 is a named acceptance test and it is the interesting one:** *structs remain rejected even
 when they implement a JSON encoder.* §5.1's closing line — *"No protocol implementation may make a
@@ -183,14 +183,14 @@ test that passes for the wrong reason, and every downstream reader will keep agr
 
 ### 6.5 Numbers — spec §6.1, §6.2, and errata V5
 
-<!-- ARM-PLANNED: domain accepts the maximum safe positive and negative integers -->
-<!-- ARM-PLANNED: domain rejects an integer one above the maximum safe integer with :integer_out_of_range -->
-<!-- ARM-PLANNED: domain rejects an integer one below the minimum safe integer with :integer_out_of_range -->
-<!-- ARM-PLANNED: domain rejects NaN and positive and negative infinity with :non_finite_number -->
-<!-- ARM-PLANNED: domain normalizes negative zero to positive zero -->
-<!-- ARM-PLANNED: domain normalizes an integral float to an integer -->
-<!-- ARM-PLANNED: domain leaves a non integral float as a float -->
-<!-- ARM-PLANNED: domain rejects a float whose integral value is outside the safe range -->
+<!-- ARM: domain accepts the maximum safe positive and negative integers -->
+<!-- ARM: domain rejects an integer one above the maximum safe integer with :integer_out_of_range -->
+<!-- ARM: domain rejects an integer one below the minimum safe integer with :integer_out_of_range -->
+<!-- ARM: OTP rejects NaN and infinities before they can become domain inputs -->
+<!-- ARM: domain normalizes negative zero to positive zero -->
+<!-- ARM: domain normalizes an integral float to an integer -->
+<!-- ARM: domain leaves a non integral float as a float -->
+<!-- ARM: domain rejects a float whose integral value is outside the safe range -->
 
 The safe range is `-(2^53 - 1) .. +(2^53 - 1)` = `-9_007_199_254_740_991 .. 9_007_199_254_740_991`.
 **Boundaries at exact and one-above/one-below, both signs.** Errata **V5** is the record of the
@@ -207,7 +207,7 @@ decided inside a fence.
 
 ### 6.6 Errors — spec §15
 
-<!-- ARM-PLANNED: error does not reproduce the rejected value -->
+<!-- ARM: error does not reproduce the rejected value -->
 
 §15: *"Errors MUST NOT inspect or reproduce the complete rejected value."* ⭐ **Make the arm real:
 construct a term containing a distinctive secret string, reject it, and assert the secret appears

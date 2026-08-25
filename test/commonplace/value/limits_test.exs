@@ -1,6 +1,8 @@
 defmodule Commonplace.Value.LimitsTest do
   use ExUnit.Case, async: true
 
+  alias Commonplace.Value.Domain
+  alias Commonplace.Value.Error
   alias Commonplace.Value.Limits
 
   # Spec §13, verbatim. §22 makes a change to these bytes a BREAKING change,
@@ -29,5 +31,36 @@ defmodule Commonplace.Value.LimitsTest do
              :max_object_members,
              :max_string_bytes
            ]
+  end
+
+  test "limits validation accepts the default limit set" do
+    assert {:ok, nil} = Domain.validate(nil, limits: %Limits{})
+  end
+
+  test "limits validation rejects a zero or negative bound with :invalid_limits" do
+    assert_invalid_limits(%Limits{max_depth: 0})
+    assert_invalid_limits(%Limits{max_nodes: -1})
+  end
+
+  test "limits validation rejects a non-integer bound with :invalid_limits" do
+    assert_invalid_limits(%Limits{max_bytes: 1.0})
+  end
+
+  test "limits validation rejects :infinity for any bound with :invalid_limits" do
+    for field <- Map.keys(Map.from_struct(%Limits{})) do
+      limits = struct!(Limits, [{field, :infinity}])
+      assert_invalid_limits(limits)
+    end
+  end
+
+  defp assert_invalid_limits(limits) do
+    assert {:error,
+            %Error{
+              operation: :construct,
+              reason: :invalid_limits,
+              path: "",
+              limit: nil,
+              actual: nil
+            }} = Domain.validate(nil, limits: limits)
   end
 end
