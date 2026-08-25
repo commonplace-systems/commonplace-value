@@ -202,7 +202,7 @@ branch → `land-round.sh`.** There is no other path to `main`.
 | # | trap | the tell |
 | --- | --- | --- |
 | a | **Sol usually CANNOT commit** — `.git` is read-only in the fence | `0 commits` ≠ failed round. **Judge by `git -C $wt diff`**, then commit on Sol's behalf |
-| b | ⛔ **Never `git checkout --` / `reset` / `stash` in the Sol worktree** | it erases the round's uncommitted work. Use `bin/mutate.sh` for every mutation |
+| b | ⛔ **Never `git checkout --` / `reset --hard` / `stash` — ANYWHERE, not just the Sol worktree** | ⚠️ **scope corrected 2026-08-25 after it cost work TWICE in the MAIN checkout** (errata **V12**). The hazard is the command, not the location. Use `bin/mutate.sh` for mutations, and demonstrate repository properties in a **scratch repo** — see `bin/check-landing-refuses.sh` |
 | c | **No egress inside the fence** | prime deps on the host first; brief Sol to STOP with headline `compile blocked in fence` |
 | d | **Sibling deps as DETACHED worktree pins** `~/<repo>-pin-<sha>` | never a live checkout. `bin/pin-in-use.sh` before removing one |
 | e | ⛔ **`pgrep -f` / `pkill -f` matches your own argv** | a waiter built that way waits for itself forever. **Wait and kill by captured PID** |
