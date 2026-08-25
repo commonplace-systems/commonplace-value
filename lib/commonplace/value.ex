@@ -3,7 +3,7 @@ defmodule Commonplace.Value do
   An inert portable value identified by its RFC 8785 canonical bytes.
   """
 
-  alias Commonplace.Value.{Domain, Encoder, Error, Limits, Metrics}
+  alias Commonplace.Value.{Decoder, Domain, Encoder, Error, Limits, Metrics}
 
   @enforce_keys [:canonical_bytes, :normalized_term, :metrics]
   defstruct @enforce_keys
@@ -41,6 +41,18 @@ defmodule Commonplace.Value do
            metrics: metrics
          }}
       end
+    end
+  end
+
+  @spec from_canonical_json(binary(), keyword()) :: {:ok, t()} | {:error, Error.t()}
+  def from_canonical_json(bytes, opts \\ []) do
+    with {:ok, normalized, metrics} <- Decoder.decode(bytes, opts) do
+      {:ok,
+       %__MODULE__{
+         canonical_bytes: bytes,
+         normalized_term: normalized,
+         metrics: metrics
+       }}
     end
   end
 

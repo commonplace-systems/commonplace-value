@@ -79,6 +79,40 @@ none.
 
 ---
 
+### ⛔ AMENDED AFTER P4 — I UNDERCOUNTED BY MORE THAN FOUR TIMES
+
+**Measured 2026-08-25 against the built decoder**, by replacing the re-encode comparison with `true`
+and re-running the 22-case negative corpus:
+
+```text
+cases: 22   wrong: 14        VERDICT: FAIL      (mix test: 118 tests, 10 failures)
+```
+
+⇒ **Clause 6 is the ONLY thing rejecting FOURTEEN of the 22 cases**, not three:
+
+| still rejected without clause 6 (8) | why |
+| --- | --- |
+| `201-bom` · `217-leading-zero` · `218-malformed-utf8` · `220-empty` · `221-truncated` | the parser refuses the bytes |
+| `206-trailing-value` | `:trailing_data`, checked separately |
+| `219-unsafe-number` | §6.3's binary64 spelling check |
+| `999-deliberate-acceptance` | correctly accepted either way |
+
+| accepted the moment clause 6 goes (14) | |
+| --- | --- |
+| all four whitespace variants · both duplicate-key variants · unsorted keys · escaped solidus · alternate escape · uppercase hex escape · all four noncanonical number spellings | **every one is VALID JSON**, so nothing upstream has any reason to object |
+
+⭐ **THE ERROR IN MY ORIGINAL COUNT IS THE INTERESTING PART.** I listed the three cases where the
+parser returns a **different value** than the bytes describe, and silently treated the rest —
+spelling, ordering, escaping — as if something else would catch them. **Nothing else does.** Those
+inputs are perfectly legal JSON that merely is not *canonical*, and canonicality is exactly the
+property no general parser has an opinion about.
+
+⚠️ **So the original entry understated its own case by 4.6×, in the direction that makes the clause
+look more removable.** ⛔ *An estimate offered in support of a rule is not evidence for it; this one
+survived unmeasured for four rounds because it pointed the right way.*
+
+---
+
 ## V4 — §6.3 must be applied over the parser's output, not delegated to it
 
 **Measured by:** commonplace-value (Opus), 2026-08-25.
