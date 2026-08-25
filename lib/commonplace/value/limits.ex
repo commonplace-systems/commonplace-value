@@ -14,8 +14,8 @@ defmodule Commonplace.Value.Limits do
   `limits validation rejects a non-integer bound with :invalid_limits` and
   `limits validation rejects :infinity for any bound with :invalid_limits`.
 
-  ⛔ **This module does not ENFORCE any limit.** Enforcement is round P2; until
-  its arms exist, nothing here may be described as implemented.
+  `Commonplace.Value.Domain` enforces every field except `max_bytes`, which is
+  measured on canonical bytes and therefore belongs with the encoder.
   """
 
   defstruct max_bytes: 1_048_576,
