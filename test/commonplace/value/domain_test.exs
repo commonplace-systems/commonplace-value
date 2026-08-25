@@ -133,15 +133,29 @@ defmodule Commonplace.Value.DomainTest do
       end
     end
 
-    # arithmetic routes: overflow, 0/0, x/0, log(0)
-    assert_raise ArithmeticError, fn -> 1.0e308 * 10 end
-    assert_raise ArithmeticError, fn -> 0.0 / 0.0 end
-    assert_raise ArithmeticError, fn -> 1.0 / 0.0 end
-    assert_raise ArithmeticError, fn -> :math.log(0.0) end
+    # arithmetic routes: overflow, 0/0, x/0, log(0).
+    # ⛔ THE OPERANDS ARE OPAQUE ON PURPOSE. Written as literals, the compiler
+    # constant-folds them, proves they raise, and emits six warnings -- which is
+    # the compiler AGREEING with this arm from a second instrument, but also
+    # noise, and worse: a folded expression is evaluated at COMPILE time, so a
+    # future compiler could turn these into build errors and the assertion would
+    # never run at runtime. ⭐ The claim is about the RUNTIME's refusal, so the
+    # values must reach the operator at runtime.
+    huge = opaque(1.0e308)
+    zero = opaque(0.0)
+    one = opaque(1.0)
 
-    # textual routes
-    assert_raise ArgumentError, fn -> :erlang.list_to_float(~c"inf") end
-    assert_raise ArgumentError, fn -> :erlang.binary_to_float("inf") end
+    assert_raise ArithmeticError, fn -> huge * 10 end
+    assert_raise ArithmeticError, fn -> zero / zero end
+    assert_raise ArithmeticError, fn -> one / zero end
+    assert_raise ArithmeticError, fn -> :math.log(zero) end
+
+    # textual routes -- operands opaque for the same reason as above
+    inf_charlist = opaque(~c"inf")
+    inf_binary = opaque("inf")
+
+    assert_raise ArgumentError, fn -> :erlang.list_to_float(inf_charlist) end
+    assert_raise ArgumentError, fn -> :erlang.binary_to_float(inf_binary) end
   end
 
   test "domain normalizes negative zero to positive zero" do
@@ -198,4 +212,19 @@ defmodule Commonplace.Value.DomainTest do
               actual: nil
             }} = result
   end
+
+  # Keeps a value out of the compiler's constant folder so the operator it feeds
+  # is exercised at RUNTIME.
+  #
+  # ⚠️ MEASURED, and narrower than it first looks. Three variants, cold `mix test`:
+  #   operand written as a literal          -> 6 warnings (the compiler folds and proves the raise)
+  #   `defp opaque(v), do: v`               -> 0 warnings
+  #   the term round trip below             -> 0 warnings
+  # ⛔ So a plain private function ALREADY suppresses folding at elixir 1.18 /
+  # OTP 27, and the round trip is not demonstrably necessary today. It is kept as
+  # defence against an optimiser that inlines a trivial `defp` -- a REASONED
+  # choice, not a measured requirement, and it is labelled that way because
+  # "right conclusion, wrong mechanism" is the version that survives review
+  # (errata V10).
+  defp opaque(value), do: :erlang.binary_to_term(:erlang.term_to_binary(value))
 end
