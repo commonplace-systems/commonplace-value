@@ -12,8 +12,43 @@
 #
 # Usage: bin/land-round.sh sol/phase-N
 set -euo pipefail
+
+# ⛔ RUN FROM A PRIVATE COPY. This script MERGES, and a merge that changes this
+# file rewrites it WHILE BASH IS STILL READING IT -- bash reads a script
+# incrementally by byte offset, so the running command can be SPLICED from two
+# different versions. That is undefined behaviour, not a version choice.
+#
+# ⚠️ WHAT THIS FIXES, STATED PRECISELY, BECAUSE I FIRST GOT IT WRONG: it makes the
+# run DETERMINISTIC -- exactly the PRE-MERGE version executes, start to finish.
+# It does NOT make a newly added gate run on the landing that introduces it.
+# ⭐ SO THE STANDING FACT IS: A LANDING IS GATED BY THE SCRIPT AS IT WAS BEFORE
+# THAT LANDING. A gate added in branch X first gates the landing AFTER X.
+# Observed three times here as "the new gate line printed nothing", each time
+# read as a scripting slip rather than as the rule it actually is.
+# ⇒ The running version is echoed below so this is OBSERVABLE per landing rather
+#   than inferred. If you need a new gate to cover its own branch, run it by
+#   hand on that branch first and say so.
+#
+# ⚠️ --root IS PASSED AS AN ARGUMENT, NOT AN ENVIRONMENT VARIABLE, on purpose.
+# bin/check-landing-refuses.sh runs a substituted copy of this script inside a
+# SCRATCH repo, and an inherited root would make that copy cd into the REAL
+# repository and act on it. An argument cannot leak into a grandchild; ambient
+# state can. Measured: the real repo's main and origin/main are byte-unchanged
+# across a full run of the gate-on-the-gate.
+root=""
+if [ "${1:-}" = "--root" ]; then root="${2:?--root needs a path}"; shift 2; fi
+if [ -z "$root" ]; then
+  root="$(cd "$(dirname "$0")/.." && pwd)"
+  self_copy="$(mktemp)"; cat "$0" > "$self_copy"
+  exec bash "$self_copy" --root "$root" "$@"
+fi
+# Reached only in the re-executed copy: remove it once bash has finished reading.
+case "$0" in /tmp/*) trap 'rm -f "$0"' EXIT ;; esac
+
 branch="${1:?round branch, e.g. sol/phase-6}"
-cd "$(dirname "$0")/.."
+cd "$root"
+# ⭐ Which version of this script is doing the gating -- observable, not inferred.
+echo "land-round.sh: gating with the PRE-MERGE script, sha256 $(sha256sum bin/land-round.sh | cut -c1-12)"
 # ⛔ The whole defect: refuse unless we are on main in a non-worktree checkout.
 cur=$(git branch --show-current)
 [ "$cur" = "main" ] || { echo "REFUSED: on '$cur', not main. cd to the main checkout." >&2; exit 64; }

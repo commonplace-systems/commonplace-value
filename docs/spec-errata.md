@@ -303,3 +303,38 @@ stubbed — *a stub would prove the stub*.
 the defect it hunts — *by watching an origin actually move*, not by reading the script. The fourth
 proves it refuses to render a verdict about work it never examined, which is the failure a gate is
 most likely to aim at itself.
+
+---
+
+## V10 — a landing is gated by the script as it was BEFORE that landing
+
+**Measured by:** commonplace-value (Opus), 2026-08-25, after getting the diagnosis wrong once.
+
+`bin/land-round.sh` merges, then runs its gates. ⛔ **A merge that changes `land-round.sh` rewrites
+the file while bash is still reading it** — bash reads a script incrementally by byte offset, so the
+running command can be **spliced from two different versions**. That is undefined behaviour, not a
+version choice.
+
+**Observed three times here**, always as the same silent symptom: a gate line added in a branch
+printed **nothing** on the landing that introduced it. Each time it read as a scripting slip.
+
+**Fix:** the script re-executes from a private copy taken before the merge, with the repository root
+passed as an **argument** rather than an environment variable — because `bin/check-landing-refuses.sh`
+runs a substituted copy inside a scratch repo, and an inherited root would make that copy `cd` into
+the **real** repository and act on it. ⭐ **An argument cannot leak into a grandchild; ambient state
+can.** Measured: the real `main` and `origin/main` are byte-unchanged across a full run of the
+gate-on-the-gate, and the re-exec copy leaks nothing (0 temp files after five runs).
+
+⚠️ **WHAT THIS DOES NOT FIX, and I first claimed it did.** Determinism is not coverage. The
+pre-merge version now runs start to finish, which means:
+
+> ⭐ **A LANDING IS GATED BY THE SCRIPT AS IT WAS BEFORE THAT LANDING. A gate added in branch X
+> first gates the landing AFTER X.**
+
+⇒ The script now **echoes the sha256 of the version doing the gating**, so this is observable per
+landing rather than inferred. If a new gate must cover its own branch, run it by hand on that branch
+and say so.
+
+⛔ **The general shape, which is the night's recurring one:** I had a correct fix attached to a wrong
+explanation. *Right conclusion, wrong mechanism* is the version that survives review, because
+everything downstream keeps agreeing with it.
