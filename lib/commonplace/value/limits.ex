@@ -7,9 +7,15 @@ defmodule Commonplace.Value.Limits do
   previously valid boundary traffic"* as a **breaking change**, which is why
   they are pinned by a test rather than merely written down.
 
-  Validation of caller-supplied limits (`:invalid_limits`, the ban on
-  `:infinity` in §13 rule 6) lands in round P1 — see
-  `docs/IMPLEMENTATION-PLAN-P1.md`.
+  `validate/1` checks caller-supplied limits (§13 rule 5's positive finite
+  integers, rule 6's ban on `:infinity`). Covered by the arms
+  `limits validation accepts the default limit set`,
+  `limits validation rejects a zero or negative bound with :invalid_limits`,
+  `limits validation rejects a non-integer bound with :invalid_limits` and
+  `limits validation rejects :infinity for any bound with :invalid_limits`.
+
+  ⛔ **This module does not ENFORCE any limit.** Enforcement is round P2; until
+  its arms exist, nothing here may be described as implemented.
   """
 
   defstruct max_bytes: 1_048_576,
