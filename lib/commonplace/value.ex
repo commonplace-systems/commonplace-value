@@ -3,7 +3,7 @@ defmodule Commonplace.Value do
   An inert portable value identified by its RFC 8785 canonical bytes.
   """
 
-  alias Commonplace.Value.{Decoder, Domain, Encoder, Error, Limits, Metrics}
+  alias Commonplace.Value.{Composer, Decoder, Domain, Encoder, Error, Limits, Metrics}
 
   @enforce_keys [:canonical_bytes, :normalized_term, :metrics]
   defstruct @enforce_keys
@@ -43,6 +43,23 @@ defmodule Commonplace.Value do
       end
     end
   end
+
+  @type composable_term ::
+          Domain.normalized_term()
+          | t()
+          | [composable_term()]
+          | %{String.t() => composable_term()}
+
+  @doc """
+  Constructs a value from ordinary portable terms and existing Values.
+
+  Existing Values are trusted package values inside a cooperative Realm, but
+  their representation is still checked in bounded time. This is an API and
+  cooperative-runtime guarantee, not a cryptographic seal against hostile code
+  capable of forging structs in the same VM.
+  """
+  @spec compose(composable_term(), keyword()) :: {:ok, t()} | {:error, Error.t()}
+  def compose(term, opts \\ []), do: Composer.compose(term, opts)
 
   @spec from_canonical_json(binary(), keyword()) :: {:ok, t()} | {:error, Error.t()}
   def from_canonical_json(bytes, opts \\ []) do

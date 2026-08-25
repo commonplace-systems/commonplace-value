@@ -24,6 +24,16 @@ defmodule Commonplace.Value.Domain do
     end
   end
 
+  @doc false
+  @spec validate_composition_key(term(), [term()], Limits.t()) ::
+          {:ok, non_neg_integer()} | {:error, Error.t()}
+  def validate_composition_key(key, path, limits) do
+    with :ok <- validate_limits(limits),
+         {:ok, metrics} <- validate_key(key, path, limits, Metrics.empty()) do
+      {:ok, metrics.maximum_string_byte_length}
+    end
+  end
+
   defp validate_limits(limits) do
     case Limits.validate(limits) do
       :ok -> :ok
