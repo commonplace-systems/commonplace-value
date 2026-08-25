@@ -46,6 +46,11 @@ gate "mix test" mix test
 gate "check-plan-arms" bash bin/check-plan-arms.sh
 # Not in commonplace-doc's copy: this repo's spec is jes's and byte-identical.
 gate "check-spec-pristine" bash bin/check-spec-pristine.sh
+# ⭐ The gate-on-the-gate, required by jes's composition ruling §14.5: prove a
+# failing gate never reaches `git push`. Hermetic -- it runs in a scratch repo
+# with its own bare origin and never touches this one. Substituting the gates
+# means the copy under test cannot recurse into this line.
+gate "check-landing-refuses" bash bin/check-landing-refuses.sh
 git push -q origin main "$branch"
 git fetch -q origin
 # ⭐ The verdict is what origin says, not what push returned.
