@@ -272,14 +272,19 @@ never compare an implementation against itself.** `commonplace-log`'s canonicali
 
 ## 7. Round map
 
-| round | delivers | spec |
-| --- | --- | --- |
-| **P1** ✅ `6bbea45` | value domain: validation, normalization, UTF-8, RFC 6901 paths, structured errors | §5 §6.1 §6.2 §7 §15 |
-| **P2** ⏳ in flight | resource-limit accounting at one-below / exact / one-above, depth-before-work, property generators | §13 §19.2 |
-| **P3** | RFC 8785 encoder, the opaque struct **carrying the ruling §5 cached metrics**, `new/2` + `encode/1` + `to_term/1` + `equal?/2`, `max_bytes`, corpus harness, anti-vacuity | §9 §10 §12 §13.1 §19.1 §19.3 |
-| **P4** | canonical decoding, the re-encode byte gate, negative corpus | §11 §19.2 |
-| **P5** | **`compose/2`** — the ruling's 20 required tests and the 18-walk envelope regression fixture | ruling §2–§12 |
-| **P6** | boundary proof, cross-process determinism, differential bytes vs `Commonplace.Log.Jcs` over fixtures | §17 §18 §20.3 §20.17 |
+| round | delivers | spec | status |
+| --- | --- | --- | --- |
+| **P1** | value domain: validation, normalization, UTF-8, RFC 6901 paths, structured errors | §5 §6.1 §6.2 §7 §15 | ✅ `6bbea45` |
+| **P2** | resource-limit accounting at one-below / exact / one-above, depth-before-work | §13 §19.2 | ✅ `ce51ba8` |
+| **P3** | RFC 8785 encoder, the opaque struct with the ruling's cached metrics, `new/2` `encode/1` `to_term/1` `equal?/2`, `max_bytes`, corpus harness | §9 §10 §12 §13.1 §19.1 §19.3 | ✅ `31e43e9` |
+| **P4** | canonical decoding, the re-encode byte gate, the 22-case negative corpus | §11 §19.2 | ✅ `32f8bba` |
+| **P5** | **`compose/2`** — the ruling's 20 required tests and the envelope regression fixture | ruling §2–§12 | ✅ `acda89e` |
+| **P6** | fresh-process determinism, differential bytes vs `Commonplace.Log.Jcs`, boundary proof, dependency hygiene | §17 §18 §20.3 §20.17 §20.18 | ✅ landed |
+
+⭐ **0.1's planned rounds are COMPLETE.** All twenty of §20's acceptance items have a named green
+arm. ⛔ **§24 is NOT fully demonstrated and the gap is named in errata V15** — two independent
+implementations agreeing on every pinned *rejection* needs a second implementation of §5/§6/§11,
+which is not this repository's to write.
 
 ⭐ **See `docs/spec-errata.md` V8 for why `compose/2` is P5 and not earlier** — the ruling's own
 required tests 18 and 19 need canonical decoding, which is P4. ✅ **P3 remains `commonplace-cell`'s
