@@ -13,8 +13,76 @@ conformance/
 
 ⛔ **An empty directory and a passing corpus are indistinguishable to a harness that does not
 count.** Any harness reading these MUST assert a non-zero case count per directory before reporting
-green. **`invalid-values/` is still empty** — it is filled in P4, when there is a decoder to reject
-things.
+green.
+
+---
+
+## `invalid-values/` — ours, 22 cases, the §19.2 rejection vectors
+
+**Format** — deliberately different from the other two directories, because these cases are about
+bytes that must be REFUSED, not bytes that must be produced:
+
+- **`input.bytes`** — the raw input, authoritative to the byte. ⛔ **No trailing LF.** The bytes
+  *are* the case; a trailing newline would silently turn every case into `204`.
+- **`reason`** — one acceptable `Commonplace.Value.Error` reason slug per line. ⭐ **More than one
+  line means the spec does not pin which comes first**, and a harness must accept any of them.
+- **`why.md`** — one sentence. What this case is for, in prose, so a future reader is not reverse-
+  engineering intent from 3 bytes.
+
+### ⭐ Only three cases have an ambiguous slug, and the ambiguity is real
+
+| case | slugs | why both are defensible |
+| --- | --- | --- |
+| `201-bom` | `invalid_json` · `non_canonical_json` | a strict parser rejects the byte before canonicality is ever assessed |
+| `206-trailing-value` | `trailing_data` · `non_canonical_json` | §15 names `trailing_data`; the re-encode gate would also catch it |
+| `218-malformed-utf8` | `invalid_utf8` · `invalid_json` | the parser rejects the byte, and the domain would too |
+
+⛔ **Everything else pins exactly one slug.** ⚠️ **Do not "simplify" a two-slug case to one** — that
+bakes an implementation's evaluation order into a language-neutral corpus.
+
+### ⚠️ `219-unsafe-number` is the one whose two operations carry DIFFERENT reasons
+
+`9007199254740993` is 2^53+1. Its binary64 image is `9007199254740992`, whose canonical spelling
+**differs from the input**, so §6.3 requires rejection as **`:number_not_interoperable`** — that is
+the **decode** reason, and it is what this case pins.
+
+⭐ **The same digits reaching `new/2` as an Elixir integer are rejected as `:integer_out_of_range`
+instead** (§6.1). ⇒ **Same value, two entry points, two correct reasons.** *(Measured: `JSON.decode`
+returns the arbitrary-precision integer without complaint, so this rejection is entirely ours —
+errata **V4**.)*
+
+### ⭐ The cases the stdlib parser ACCEPTS, which are the point of §11 clause 6
+
+Measured, errata **V3**. For these, the parser returns `{:ok, …}` and **only the re-encode byte
+comparison rejects them**:
+
+| case | `JSON.decode/1` returns |
+| --- | --- |
+| `203-trailing-whitespace` | `{:ok, 1}` |
+| `207-duplicate-keys` | `{:ok, %{"a" => 1}}` — silently collapsed |
+| `208-duplicate-keys-equal` | `{:ok, %{"a" => 1}}` — and collapsing loses **no value at all** |
+
+⇒ **Deleting §11 clause 6 must turn these red.** ⚠️ *Its stated justification is smaller than the job
+it does, which is exactly what makes it look removable.*
+
+### ⛔ `999-deliberate-acceptance` — anti-vacuity, INVERTED for this directory
+
+`canonical/999` and `valid-values/999` store a wrong *expectation*. This directory needs the opposite
+trap: **`999-deliberate-acceptance` contains `1`, which IS canonical and MUST be ACCEPTED.**
+
+⭐ **A rejection harness that rejects everything passes every other case in this directory.** That is
+the failure mode here — not a wrong expectation, but an indiscriminate one — so the fixture that
+detects it is a case that must **succeed**. A harness reporting `999` as correctly rejected is broken
+and must fail the run.
+
+### Verified at authoring time
+
+Every case was run through the landed P3 encoder: parse permissively, construct, encode, compare to
+the input bytes. **21 non-canonical, 1 canonical (the `999` case), 0 mislabeled.**
+⚠️ **That check uses the encoder to validate the CORPUS, which is legitimate** — the encoder is
+independently verified against 29 positive vectors — **but it is not free: if the encoder were wrong
+about some construct, a negative case could be mislabeled.** It cannot validate the encoder; that
+would be an implementation compared with itself.
 
 ---
 
