@@ -35,15 +35,25 @@ set -euo pipefail
 # repository and act on it. An argument cannot leak into a grandchild; ambient
 # state can. Measured: the real repo's main and origin/main are byte-unchanged
 # across a full run of the gate-on-the-gate.
-root=""
-if [ "${1:-}" = "--root" ]; then root="${2:?--root needs a path}"; shift 2; fi
+root=""; rm_self=0
+while :; do
+  case "${1:-}" in
+    --root)    root="${2:?--root needs a path}"; shift 2 ;;
+    # ⛔ THE PRIVATE COPY IDENTIFIES ITSELF WITH A FLAG. The first version inferred
+    # it from a path prefix -- `case "$0" in /tmp/*)` -- and DELETED A CALLER-SUPPLIED
+    # SCRIPT the first time one was run from a /tmp path. ⭐ "It looks like mine" is
+    # not "it is mine": a heuristic that decides what to DELETE will eventually be
+    # right about the pattern and wrong about the file.
+    --rm-self) rm_self=1; shift ;;
+    *) break ;;
+  esac
+done
 if [ -z "$root" ]; then
   root="$(cd "$(dirname "$0")/.." && pwd)"
   self_copy="$(mktemp)"; cat "$0" > "$self_copy"
-  exec bash "$self_copy" --root "$root" "$@"
+  exec bash "$self_copy" --root "$root" --rm-self "$@"
 fi
-# Reached only in the re-executed copy: remove it once bash has finished reading.
-case "$0" in /tmp/*) trap 'rm -f "$0"' EXIT ;; esac
+[ "$rm_self" -eq 1 ] && trap 'rm -f "$0"' EXIT
 
 branch="${1:?round branch, e.g. sol/phase-6}"
 cd "$root"
