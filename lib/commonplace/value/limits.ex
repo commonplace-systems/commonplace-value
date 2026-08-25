@@ -27,4 +27,18 @@ defmodule Commonplace.Value.Limits do
           max_object_members: pos_integer(),
           max_array_elements: pos_integer()
         }
+
+  @spec validate(t()) :: :ok | {:error, :invalid_limits}
+  def validate(%__MODULE__{} = limits) do
+    limits
+    |> Map.from_struct()
+    |> Map.values()
+    |> Enum.all?(&(is_integer(&1) and &1 > 0))
+    |> case do
+      true -> :ok
+      false -> {:error, :invalid_limits}
+    end
+  end
+
+  def validate(_limits), do: {:error, :invalid_limits}
 end
