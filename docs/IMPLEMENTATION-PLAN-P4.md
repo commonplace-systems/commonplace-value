@@ -133,20 +133,20 @@ both times. The markers are the contract, not my arithmetic.*
 
 ### 6.1 The six acceptance conditions — §11
 
-<!-- ARM-PLANNED: from canonical json accepts the canonical bytes of every positive corpus case -->
-<!-- ARM-PLANNED: from canonical json rejects insignificant whitespace -->
-<!-- ARM-PLANNED: from canonical json rejects a trailing newline -->
-<!-- ARM-PLANNED: from canonical json rejects a trailing JSON value -->
-<!-- ARM-PLANNED: from canonical json rejects a byte order mark -->
-<!-- ARM-PLANNED: from canonical json rejects unsorted object keys -->
-<!-- ARM-PLANNED: from canonical json rejects duplicate object keys -->
-<!-- ARM-PLANNED: from canonical json rejects duplicate object keys whose values are equal -->
-<!-- ARM-PLANNED: from canonical json rejects alternate string escapes -->
-<!-- ARM-PLANNED: from canonical json rejects an escaped solidus -->
-<!-- ARM-PLANNED: from canonical json rejects uppercase hexadecimal escapes -->
-<!-- ARM-PLANNED: from canonical json rejects noncanonical number spellings -->
-<!-- ARM-PLANNED: from canonical json rejects malformed UTF-8 -->
-<!-- ARM-PLANNED: from canonical json rejects empty and truncated input -->
+<!-- ARM: from canonical json accepts the canonical bytes of every positive corpus case -->
+<!-- ARM: from canonical json rejects insignificant whitespace -->
+<!-- ARM: from canonical json rejects a trailing newline -->
+<!-- ARM: from canonical json rejects a trailing JSON value -->
+<!-- ARM: from canonical json rejects a byte order mark -->
+<!-- ARM: from canonical json rejects unsorted object keys -->
+<!-- ARM: from canonical json rejects duplicate object keys -->
+<!-- ARM: from canonical json rejects duplicate object keys whose values are equal -->
+<!-- ARM: from canonical json rejects alternate string escapes -->
+<!-- ARM: from canonical json rejects an escaped solidus -->
+<!-- ARM: from canonical json rejects uppercase hexadecimal escapes -->
+<!-- ARM: from canonical json rejects noncanonical number spellings -->
+<!-- ARM: from canonical json rejects malformed UTF-8 -->
+<!-- ARM: from canonical json rejects empty and truncated input -->
 
 ⭐ **Three of those are the clause-6 tripwires** — trailing whitespace, duplicate keys, and duplicate
 keys with equal values. ⛔ **Build them so that deleting the re-encode comparison turns all three
@@ -155,10 +155,10 @@ parser measurably does not.*
 
 ### 6.2 The numeric model on decode — §6.3
 
-<!-- ARM-PLANNED: canonical decoding yields an integer for an integral token in the safe range -->
-<!-- ARM-PLANNED: canonical decoding yields a float for an integral token outside the safe range -->
-<!-- ARM-PLANNED: canonical decoding rejects a token whose binary64 image spells differently -->
-<!-- ARM-PLANNED: the unsafe integer reason differs between construction and decoding -->
+<!-- ARM: canonical decoding yields an integer for an integral token in the safe range -->
+<!-- ARM: canonical decoding yields a float for an integral token outside the safe range -->
+<!-- ARM: canonical decoding rejects a token whose binary64 image spells differently -->
+<!-- ARM: the unsafe integer reason differs between construction and decoding -->
 
 ⭐ **The last arm pins the distinction directly:** the same digits give `:integer_out_of_range` from
 `new/2` and `:number_not_interoperable` from `from_canonical_json/2`. **It goes red if anyone unifies
@@ -166,10 +166,10 @@ them.**
 
 ### 6.3 Limits and errors — §13.1, §15
 
-<!-- ARM-PLANNED: canonical decoding measures max bytes on the input bytes -->
-<!-- ARM-PLANNED: canonical decoding checks the byte limit before parsing -->
-<!-- ARM-PLANNED: decode errors carry the decode operation rather than construct -->
-<!-- ARM-PLANNED: decode errors do not reproduce the rejected bytes -->
+<!-- ARM: canonical decoding measures max bytes on the input bytes -->
+<!-- ARM: canonical decoding checks the byte limit before parsing -->
+<!-- ARM: decode errors carry the decode operation rather than construct -->
+<!-- ARM: decode errors do not reproduce the rejected bytes -->
 
 ⭐ **`canonical decoding measures max bytes on the input bytes` is the mirror of P3's arm** and the
 two together pin §13.1's split. **Use a 1 MiB-plus input whose canonical form is small** — the shape
@@ -179,17 +179,17 @@ them is measuring the wrong quantity.*
 
 ### 6.4 Round trips — §11, §12, §20
 
-<!-- ARM-PLANNED: canonical decode followed by encode returns identical bytes -->
-<!-- ARM-PLANNED: a decoded value equals the constructed value it came from -->
-<!-- ARM-PLANNED: to term of a decoded value equals to term of the constructed value -->
-<!-- ARM-PLANNED: property construct encode decode encode is byte identical -->
+<!-- ARM: canonical decode followed by encode returns identical bytes -->
+<!-- ARM: a decoded value equals the constructed value it came from -->
+<!-- ARM: to term of a decoded value equals to term of the constructed value -->
+<!-- ARM: property construct encode decode encode is byte identical -->
 
 ### 6.5 The negative harness — §19.2
 
-<!-- ARM-PLANNED: conformance every invalid values case is rejected with an accepted reason slug -->
-<!-- ARM-PLANNED: conformance the deliberate acceptance case is accepted rather than rejected -->
-<!-- ARM-PLANNED: conformance invalid values harness refuses to report green on an empty directory -->
-<!-- ARM-PLANNED: conformance invalid values harness checks at least twenty two cases -->
+<!-- ARM: conformance every invalid values case is rejected with an accepted reason slug -->
+<!-- ARM: conformance the deliberate acceptance case is accepted rather than rejected -->
+<!-- ARM: conformance invalid values harness refuses to report green on an empty directory -->
+<!-- ARM: conformance invalid values harness checks at least twenty two cases -->
 
 ---
 
