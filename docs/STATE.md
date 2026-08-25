@@ -60,15 +60,40 @@ gate.** Every row below must have both arms demonstrated before it is trusted.
 
 | gate | green demonstrated | red demonstrated |
 | --- | --- | --- |
-| `bin/check-spec-pristine.sh` | ✅ 2026-08-25T03:4xZ — `VERDICT: PRISTINE` on the committed spec | ✅ 2026-08-25T03:4xZ — `bin/mutate.sh docs/proposals/…spec.md '1a\INJECTED' -- bash bin/check-spec-pristine.sh` → `VERDICT: CHANGED`, rc=1, file restored |
-| `bin/check-plan-arms.sh` | see `docs/IMPLEMENTATION-PLAN-P1.md` §Gate demonstrations | idem |
-| `bin/check-plan-arms.sh --self-test` | ditto | ditto |
-| `bin/land-round.sh` refusals | ditto | ditto |
+| `check-spec-pristine.sh` | ✅ `VERDICT: PRISTINE` on the committed spec | ✅ `bin/mutate.sh docs/proposals/…spec.md '1a\INJECTED' -- bash bin/check-spec-pristine.sh` → `VERDICT: CHANGED`, rc=1, file restored |
+| `check-plan-arms.sh` — missing arm | ✅ `VERDICT: PASS -- every declared arm exists.` | ✅ promoted one `ARM-PLANNED` with no test → `MISSING pointer for the top level value is the empty string`, rc=1 |
+| `check-plan-arms.sh` — undeclared module | ✅ same run, `undeclared modules: 0` | ✅ dropped `Commonplace.Value.Sneaky` into `lib/` → `VERDICT: FAIL -- 0 declared arm(s) with no test, 1 undeclared module(s).` |
+| `check-plan-arms.sh --self-test` | ✅ `SELF-TEST PASS` | ✅ built in — it *is* the red demonstration |
+| `land-round.sh` refuses off main | ✅ landed the bootstrap from `main` → `LANDED: origin/main 711aaba` | ✅ run from `bootstrap-p1` → `REFUSED: on 'bootstrap-p1', not main.`, rc=64 |
 
-⛔ **Never pipe a gate into `tail`/`head` from a shell without `pipefail`** — the pipeline's exit
-status becomes `tail`'s and the verdict is read as 0. `bin/land-round.sh` sets `set -euo pipefail`,
-which is what makes its `… | tail -1` lines gates rather than decoration. **That is load-bearing:
-delete `pipefail` and every gate in the landing script silently becomes ornamental.**
+⭐ **The arms gate went red once on CORRECT state before any of that**, and it is the failure worth
+recording: this very file described the marker syntax in prose, the gate greps `docs/` for that
+syntax, and so the documentation *became* a phantom arm named `exact test name substring`.
+⚠️ **A gate that fires on correct state is worse than no gate** — fixed by never spelling a marker
+outside a plan (§1).
+
+### 2.1 ⛔ `pipefail` is the only thing making the landing script's gates real — MEASURED
+
+`bin/land-round.sh` invokes its gates as `… | tail -1`. A pipeline's exit status is the LAST
+command's, so without `pipefail` a failing gate prints `FAIL` and the script pushes anyway. It sets
+`set -euo pipefail`; **that word is load-bearing, and here is the measurement rather than the
+reading** (spec mutated via `bin/mutate.sh`, `REACHED_PUSH` stands in for the `git push` line):
+
+| shell options | gate result | `REACHED_PUSH` printed? |
+| --- | --- | --- |
+| `set -euo pipefail` | `VERDICT: CHANGED` | ✅ **no** — the gate stopped the run |
+| `set -eu` (no `pipefail`) | `VERDICT: CHANGED` | ⛔ **YES** — the gate was pure decoration |
+| `set -euo pipefail` | `VERDICT: PRISTINE` | ✅ yes — green state is not blocked |
+
+⭐ **All three cells were run.** The middle row is what a `pipefail`-less copy of this script does
+today, in any repo that has one.
+
+### 2.2 ⚠️ `check-spec-pristine.sh` was on NO path to `main` until 2026-08-25
+
+`commonplace-doc`'s `land-round.sh` — which this repo copied verbatim — runs `mix test` and
+`check-plan-arms.sh` and **not** the spec gate. So the gate existed in `bin/`, passed when invoked by
+hand, and gated nothing. ⭐ **A gate nothing invokes is indistinguishable from one that always
+passes.** Added here as its own commit; reported to `commonplace-doc` and `commonplace-doc-sync`.
 
 ---
 
