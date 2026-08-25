@@ -91,8 +91,12 @@ number you measured.**
 
 ## 5. Required arms
 
-⭐ **FIRST DONE STEP: promote every `ARM-PLANNED:` in §6.1–§6.6 to `ARM:`.** That turns the gate red
-with 21 missing. ⛔ **§6.7 stays `ARM-PLANNED`** — it belongs to P3 and promoting it makes `main`
+⭐ **FIRST DONE STEP: promote every `ARM-PLANNED:` in §6.1–§6.6 to `ARM:`.**
+
+⚠️ *This brief originally said 21. §§6.1–6.6 hold `4 + 3 + 4 + 4 + 3 + 4 = 22`; the round's
+implementer counted them and said so. **The markers are the contract, not my arithmetic about them**
+— corrected here rather than left as a number a future reader would trust.* That turns the gate red
+with **22** missing. ⛔ **§6.7 stays `ARM-PLANNED`** — it belongs to P3 and promoting it makes `main`
 permanently red, which is how a gate becomes ignored.
 
 ⚠️ **Per arm: the mutation that turned it red, via `bin/mutate.sh`.** ⛔ Never `git checkout --`,
@@ -110,10 +114,10 @@ rejects everything passes every one-above arm.
 
 ### 6.1 Depth — §13 rule 2
 
-<!-- ARM-PLANNED: domain counts the top level scalar as depth zero -->
-<!-- ARM-PLANNED: domain accepts nesting at exactly max_depth -->
-<!-- ARM-PLANNED: domain rejects nesting one level beyond max_depth with :max_depth_exceeded -->
-<!-- ARM-PLANNED: domain checks depth before walking a term deep enough to exhaust the stack -->
+<!-- ARM: domain counts the top level scalar as depth zero -->
+<!-- ARM: domain accepts nesting at exactly max_depth -->
+<!-- ARM: domain rejects nesting one level beyond max_depth with :max_depth_exceeded -->
+<!-- ARM: domain checks depth before walking a term deep enough to exhaust the stack -->
 
 ⚠️ The last one is §13 rule 7 and is **not** satisfied by rejecting after the walk. Build a term far
 deeper than `max_depth` — deeper than the number you measured in §3 — and assert the error comes back
@@ -122,9 +126,9 @@ restructured, restructuring it IS in scope: the round's goal is unachievable wit
 
 ### 6.2 Nodes — §13 rule 3
 
-<!-- ARM-PLANNED: domain accepts a term with exactly max_nodes nodes -->
-<!-- ARM-PLANNED: domain rejects a term with one node beyond max_nodes -->
-<!-- ARM-PLANNED: domain node count matches an independent recount of the same term -->
+<!-- ARM: domain accepts a term with exactly max_nodes nodes -->
+<!-- ARM: domain rejects a term with one node beyond max_nodes -->
+<!-- ARM: domain node count matches an independent recount of the same term -->
 
 ⭐ **The third arm is the anti-vacuity one and it must not reuse the counter under test.** Write the
 recount in the test as an obviously-correct recursive walk, and compare. ⚠️ *An implementation
@@ -133,10 +137,10 @@ canonicalizers.
 
 ### 6.3 Strings — §13 rule 4
 
-<!-- ARM-PLANNED: domain accepts a string of exactly max_string_bytes -->
-<!-- ARM-PLANNED: domain rejects a string one byte beyond max_string_bytes -->
-<!-- ARM-PLANNED: domain measures string limits in UTF-8 bytes rather than graphemes -->
-<!-- ARM-PLANNED: domain applies max_string_bytes to object keys as well as values -->
+<!-- ARM: domain accepts a string of exactly max_string_bytes -->
+<!-- ARM: domain rejects a string one byte beyond max_string_bytes -->
+<!-- ARM: domain measures string limits in UTF-8 bytes rather than graphemes -->
+<!-- ARM: domain applies max_string_bytes to object keys as well as values -->
 
 ⭐ **The graphemes arm needs a string where the three counts genuinely differ.** A family emoji
 (`👨‍👩‍👧‍👦`) is 1 grapheme, 7 code points, 25 UTF-8 bytes. ⚠️ A test using ASCII passes under all
@@ -144,16 +148,16 @@ three readings and therefore measures nothing.
 
 ### 6.4 Containers — §13
 
-<!-- ARM-PLANNED: domain accepts an object with exactly max_object_members -->
-<!-- ARM-PLANNED: domain rejects an object with one member beyond max_object_members -->
-<!-- ARM-PLANNED: domain accepts an array with exactly max_array_elements -->
-<!-- ARM-PLANNED: domain rejects an array with one element beyond max_array_elements -->
+<!-- ARM: domain accepts an object with exactly max_object_members -->
+<!-- ARM: domain rejects an object with one member beyond max_object_members -->
+<!-- ARM: domain accepts an array with exactly max_array_elements -->
+<!-- ARM: domain rejects an array with one element beyond max_array_elements -->
 
 ### 6.5 The error carries the numbers — §15
 
-<!-- ARM-PLANNED: limit errors report both the limit and the actual value -->
-<!-- ARM-PLANNED: limit errors report the JSON Pointer path of the offending container -->
-<!-- ARM-PLANNED: limit errors do not reproduce the rejected value -->
+<!-- ARM: limit errors report both the limit and the actual value -->
+<!-- ARM: limit errors report the JSON Pointer path of the offending container -->
+<!-- ARM: limit errors do not reproduce the rejected value -->
 
 ⭐ The third repeats P1's secret discipline **at the limit path specifically**, because a limit error
 is the one most tempted to say *"string of 1048577 bytes: <the string>"*. Use a distinctive secret
@@ -161,10 +165,10 @@ and assert it appears in neither the struct, `Exception.message/1`, nor `inspect
 
 ### 6.6 Caller-supplied limits, and properties — §13, §20
 
-<!-- ARM-PLANNED: domain honours a stricter caller supplied limit set -->
-<!-- ARM-PLANNED: domain honours an explicitly larger finite caller supplied limit set -->
-<!-- ARM-PLANNED: property every generated portable term within limits is accepted -->
-<!-- ARM-PLANNED: property every generated term exceeding a limit is rejected with that limit reason -->
+<!-- ARM: domain honours a stricter caller supplied limit set -->
+<!-- ARM: domain honours an explicitly larger finite caller supplied limit set -->
+<!-- ARM: property every generated portable term within limits is accepted -->
+<!-- ARM: property every generated term exceeding a limit is rejected with that limit reason -->
 
 ⭐ **The "explicitly larger" arm is the green arm of §13's opening sentence** — *"The defaults apply
 unless the caller supplies a stricter **or explicitly larger** finite limit set."* An enforcer that

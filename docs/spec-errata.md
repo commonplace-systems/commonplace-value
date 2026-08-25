@@ -338,3 +338,42 @@ and say so.
 ⛔ **The general shape, which is the night's recurring one:** I had a correct fix attached to a wrong
 explanation. *Right conclusion, wrong mechanism* is the version that survives review, because
 everything downstream keeps agreeing with it.
+## V11 — §13 rule 7's hazard on the BEAM is MEMORY, not stack depth — MEASURED
+
+**Measured by:** the Sol implementer of round P2, on this host; reviewed and accepted here.
+
+§13 rule 7 requires depth and byte limits checked *"before performing work likely to exhaust the
+VM."* The natural reading is *stack overflow*. On the BEAM that reading is wrong, and the round
+measured it rather than assuming:
+
+> ⛔ **The unbounded walk successfully validated a term of depth 12,000,000**, reaching ≈**6.0 GiB**
+> RSS. **There was no stack boundary to hit.** Continuing would have measured the machine's memory,
+> not a property of the code.
+
+⭐ **The method that produced a meaningful number instead:** install an explicit per-process heap
+ceiling (2,000,000 words) and probe.
+
+```text
+{140325, :ok}
+{140350, :down, :killed}
+```
+
+⇒ First breaking depth **140,350** under a stated ceiling; last success 140,325. ⭐ **A limit that
+only appears under a declared constraint must be reported WITH that constraint** — "the walk breaks
+at 140,350" is meaningless without "under a 2M-word heap ceiling", and the honest alternative was a
+number describing this laptop.
+
+**What this changes.** The hazard is unbounded **memory growth**, not stack exhaustion, so rule 7's
+protection must come from checking depth **before** any per-node work — not from making the walk
+iterative. The walk was refactored to thread depth and node state, with the depth check preceding
+node counting, container sizing, normalization and descent; ordinary recursion is then bounded by
+the effective depth limit. **A fully iterative rewrite was unnecessary.**
+
+Pinned by `domain checks depth before walking a term deep enough to exhaust the stack`, whose
+regression term is 150,000 deep and returns `:max_depth_exceeded` at actual depth 65.
+⚠️ **The arm's name says "stack" and the mechanism is memory.** Kept as-is because the marker is the
+contract and renaming it would silently retire the arm — but the name is now known to be imprecise,
+and this entry is where that is recorded.
+
+⚠️ **Operational note:** probing this allocated ~6 GiB on a shared host. Worth knowing before anyone
+repeats it.
