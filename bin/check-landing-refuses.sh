@@ -66,6 +66,9 @@ run_arm() {  # run_arm <gate-command>; echoes "<rc> <origin-before> <origin-afte
   build_scratch "$1"
   local before after rc
   before=$(git -C "$T/repo" rev-parse origin/main)
+  # ⛔ NO --root, and no inherited root: the scratch copy must resolve its own
+  # repository from its own location. If it ever resolved to the real repo this
+  # test would act on it, which is the one outcome worse than not testing.
   ( cd "$T/repo" && bash bin/land-round.sh feature ) > "$T/out.$2" 2>&1
   rc=$?
   git -C "$T/repo" fetch -q origin
