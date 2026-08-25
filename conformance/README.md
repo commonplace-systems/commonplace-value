@@ -11,10 +11,61 @@ conformance/
 └── invalid-values/   rejection vectors with reason slugs (this repo's, to come)
 ```
 
-⚠️ **`valid-values/` and `invalid-values/` are EMPTY at the time of writing** and are ours to fill —
-see `docs/IMPLEMENTATION-PLAN-P3.md` onward. ⛔ **An empty directory and a passing corpus are
-indistinguishable to a harness that does not count.** Any harness reading these MUST assert a
-non-zero case count before reporting green.
+⛔ **An empty directory and a passing corpus are indistinguishable to a harness that does not
+count.** Any harness reading these MUST assert a non-zero case count per directory before reporting
+green. **`invalid-values/` is still empty** — it is filled in P4, when there is a decoder to reject
+things.
+
+---
+
+## `valid-values/` — ours, 10 cases, filling gaps §19.1 requires
+
+**Why these exist.** §19.1 requires *"every scalar kind"* and *"empty arrays, objects, and keys"*.
+The imported corpus contains those **only nested inside larger documents** — measured: no
+`input.json` in `canonical/` is a top-level `null`, `true`, `false`, `""`, `[]`, or `{}`, and none
+contains the **negative** maximum safe integer.
+
+⚠️ **That gap probe first produced a FALSE ZERO** and it is worth recording why: `grep '[]'` is an
+**empty bracket expression**, not a literal, so `[]` reported absent from a file that visibly
+contains it. ⭐ **Re-run with `grep -F` and a positive control naming a string known to be present.**
+*A grep whose pattern means something other than what it looks like returns 0 hits and looks exactly
+like a confirmed absence.*
+
+| case | pins |
+| --- | --- |
+| `101`–`103` | top-level `null` · `true` · `false` |
+| `104` | top-level empty string |
+| `105` · `106` | top-level empty array · empty object |
+| `107` | **negative** maximum safe integer, the boundary `canonical/015` covers only positively |
+| `108` | the empty string as an object's **sole** key |
+| `109` | empties **nested** — `[[],{},""]` |
+| `999-deliberate-mismatch-empty` | §19.3 anti-vacuity **for this directory** |
+
+⭐ **Why a SECOND deliberate mismatch.** `canonical/999` proves the harness detects a wrong
+expectation *in `canonical/`*. ⛔ **A harness that read only `canonical/` would report green over an
+entirely unscanned `valid-values/`** — and would keep doing so as this directory grows. This case is
+how that is detected: it stores `[]` as the expectation for `{}`.
+
+### ⛔ Where the expected bytes came from
+
+**Hand-authored from RFC 8785. Not produced by any implementation.** §18 forbids importing
+`Commonplace.Log.Jcs` as the implementation or comparing an implementation against itself, and
+`commonplace-log`'s own README states *"implementations are never the source of expected bytes."*
+Our encoder does not exist yet either. Every case here is deliberately trivial enough that the
+canonical form is readable straight from the RFC: **no case needs key reordering** (0 or 1 keys),
+**none needs number reformatting** (an integer inside the safe range), **none contains an escape.**
+
+**Verified mechanically, with a positive control** — for exactly this batch, canonical output must
+equal the input with insignificant whitespace removed, and must parse to the same JSON value:
+
+```text
+agreeing: 10   unexpected: 0        (999-* must DISAGREE; every other must agree)
+positive control: expectation typo'd to "[] " -> agrees: False   (the checker catches it)
+```
+
+⚠️ **That property holds for this batch only.** ⛔ **Do not extend this directory with a case needing
+reordering, escaping, or number reformatting and reuse the same justification** — such a case needs
+its bytes derived some other way, and the check above would quietly stop meaning anything.
 
 ---
 
