@@ -14,6 +14,7 @@ cd "$(dirname "$0")/.."
 # path <TAB> declared sha256 (full)
 SPECS=$(cat <<'TSV'
 docs/proposals/2026-08-24-commonplace-value-spec.md	1ac9a43741c75564937584c99dd7a22269ecb8ca2485d160c7a56f9727504966
+docs/proposals/2026-08-25-value-composition-ruling.md	b0cc25b4078a18fe1013c94bcd3ed896e5812ce1f0f3b0e529fbf60c929a3d67
 TSV
 )
 [ -n "$SPECS" ] || { echo "INSTRUMENT BLIND: no specs declared"; exit 2; }
