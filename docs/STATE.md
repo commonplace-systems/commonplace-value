@@ -43,6 +43,15 @@ contributed a phantom arm named `exact test name substring` and the gate went re
 ⭐ **Documentation about a gate is inside that gate's corpus.** Spell markers only in plans, where
 they are meant.
 
+⚠️ **Two files in this repo DO spell the literal markers and are safe only because they sit OUTSIDE
+the corpus** — `bin/check-plan-arms.sh` itself (its `--self-test` builds a fixture corpus) and any
+`prompt.txt` in a round directory. The gate greps `docs/` and nothing else. ⛔ **Widening it to the
+repo root would make the gate poison itself with its own self-test tokens.** "Outside the corpus" is
+the only thing keeping those two files harmless, and it is not visible from either file.
+
+**Counted, not assumed** (2026-08-25, bootstrap): 1268 doc lines · **1** literal `ARM` marker (the
+bootstrap arm, and it has a test) · 32 `ARM-PLANNED` · 4 `MODULE` · **0 phantoms**.
+
 ⭐ **The `ARM:` marker IS the code claim.** A round's first done-step is to promote its
 `ARM-PLANNED` markers to `ARM`, which turns the worktree's gate **red with N missing**. The round is
 done when it is green *because the tests exist under those names*.
