@@ -22,14 +22,30 @@ git rev-parse --verify -q "$branch" >/dev/null || { echo "REFUSED: no branch $br
 before=$(git rev-parse HEAD)
 git merge --no-ff -q "$branch" -m "Merge branch '$branch'"
 mix deps.get >/dev/null 2>&1 || true
-mix test 2>&1 | tail -1
-bash bin/check-plan-arms.sh | tail -1
-# ⛔ ADDED HERE, not inherited: commonplace-doc's copy of this script has no
-# spec-pristine line, so the gate existed in bin/ and was on NO path to main.
-# A gate nothing invokes is indistinguishable from one that always passes.
-# Its RED arm is demonstrated in docs/STATE.md §2; pipefail above is what makes
-# this line a gate rather than a print.
-bash bin/check-spec-pristine.sh | tail -1
+# Gates capture their own exit status. Earlier form was `gate | tail -1`, which
+# is a gate ONLY while `pipefail` is set -- commonplace-value measured (2026-08-25)
+# that with `set -eu` alone the same line prints FAIL and proceeds to push. A gate
+# whose teeth live in a shell option three lines away is one edit from decoration.
+gate() {  # gate <label> <cmd...>: run, keep the verdict line, stop on non-zero
+  local label="$1"; shift
+  local out rc=0
+  out=$("$@" 2>&1) || rc=$?   # `|| rc=$?`: under set -e a failing assignment exits BEFORE a following rc=$? (seen: silent rc=1, no REFUSED line)
+  if [ "$rc" -ne 0 ]; then
+    echo "$out" | tail -20
+    echo "REFUSED: $label failed (rc=$rc); not pushing." >&2
+    # ⚠ THE MERGE ALREADY HAPPENED LOCALLY and is left in the tree. origin is
+    # untouched -- that is the property that matters -- but local main now carries a
+    # merge the gates rejected, and a naive re-run would push it. Name the way back,
+    # because "nothing was pushed" and "nothing happened" are not the same state.
+    echo "REFUSED: local main still holds the rejected merge. Undo with: git reset --hard $before" >&2
+    exit 70
+  fi
+  echo "$out" | tail -1
+}
+gate "mix test" mix test
+gate "check-plan-arms" bash bin/check-plan-arms.sh
+# Not in commonplace-doc's copy: this repo's spec is jes's and byte-identical.
+gate "check-spec-pristine" bash bin/check-spec-pristine.sh
 git push -q origin main "$branch"
 git fetch -q origin
 # ⭐ The verdict is what origin says, not what push returned.
