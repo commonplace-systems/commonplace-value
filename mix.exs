@@ -19,10 +19,16 @@ defmodule Commonplace.Value.MixProject do
   end
 
   # Run "mix help deps" to learn about dependencies.
+  # ⛔ ZERO RUNTIME DEPS, and that is a property rather than an accident:
+  # spec §21 forbids depending on commonplace-log or any higher layer, and a pure
+  # value package is also the best case for the Sol fence -- it can produce no
+  # false finding about network, credentials, or a live store.
+  #
+  # stream_data is `only: :test`. Spec §21 permits "test-only property and
+  # conformance tooling"; §20 asks for property tests over bounded portable terms.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:stream_data, "~> 1.1", only: :test, runtime: false}
     ]
   end
 end
