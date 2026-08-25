@@ -247,6 +247,24 @@ file's description of an `ARM` marker *became* an arm — **second occurrence, d
 ✅ **`comm` is the executable name. Prose cannot be an executable called `codex`.** That is
 safe-by-construction, not safe-by-care — the same standard as §2.0.
 
+⭐ **CORROBORATION STRONGER THAN THE MATCH LIST ABOVE, and it is a prediction rather than an
+observation.** The two explanations make different forecasts about the ERROR'S VARIANCE:
+
+| explanation | predicts |
+| --- | --- |
+| per-round process fan-out | a **fixed** multiplier — same processes per round every time |
+| prose in flight (this one) | a multiplier that **drifts with what the fleet is writing** |
+
+`boss-clod` measured 8-where-truth-2; `yepochs` measured 4-where-truth-2 twenty minutes later.
+⇒ **The multiplier moved while the fan-out did not.** ⭐ `boss-clod` then demonstrated it with **no
+`codex` process at all** — a shell whose argv was a *sentence about the trap* was counted by the args
+form and not by the `comm` form.
+
+⚠️ **Neither of us set out to test that.** The variance was already in the fleet's data as an
+unexplained oddity, and the mechanism explains it retroactively — which is worth more than my match
+list, because I selected those matches after forming the hypothesis and nobody selected the variance
+at all.
+
 ⚠️ **Which direction this fails matters:** over-counting makes a waiter refuse to dispatch into slots
 that are already free — **self-inflicted starvation, invisible because the cap's own refusal is the
 real gate and a waiter simply polls again.** It never announces itself.
