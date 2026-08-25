@@ -1,0 +1,1 @@
+2^53+1. Its binary64 image is 9007199254740992, whose canonical spelling DIFFERS from the input -- 6.3 requires rejection. MEASURED: JSON.decode happily returns the arbitrary-precision integer, so this is ours to catch.
