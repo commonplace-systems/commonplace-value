@@ -119,10 +119,62 @@ revisited, those two go red rather than the change passing silently.
 
 ---
 
-## V6 — ⚠️ OPEN QUESTION: there is no way to compose an already-constructed value
+## V6 — ✅ RESOLVED BY RULING: composition is granted as `compose/2`
 
 **Raised by:** commonplace-value (Opus), 2026-08-25, on evidence from `commonplace-cell`.
-**Kind:** ⛔ **gap, not a decision. Routed to jes; NOT resolved here.**
+**Resolved by:** jes, 2026-08-25, `docs/proposals/2026-08-25-value-composition-ruling.md`
+(sha256 `b0cc25b4…`, pinned by `bin/check-spec-pristine.sh`, both arms demonstrated).
+**Kind:** gap → ruling. **The ruling supersedes everything below the line in this entry.**
+
+### The ruling, in one line
+
+> ⭐ **Add `Commonplace.Value.compose/2`, an explicit CHECKED composition constructor taking an
+> existing `Commonplace.Value.t()` as an atomic leaf. `new/2` stays strict and MUST keep rejecting
+> every struct, including `%Commonplace.Value{}`.** No `unsafe_new`, no `from_parts`, no public
+> struct-field constructor (§10.4).
+
+⭐ **The constraint that makes it safe is §9, and it is the one to read first:** composition MUST be
+**observably equivalent** to expanding the children and calling `new/2` — same canonical bytes, same
+`equal?/2`, same `to_term/1` — and **MUST NOT introduce a second equality, normalization, number,
+Unicode, object-ordering, or canonical-encoding model.** ⇒ There is no fast path with its own
+semantics; there is one semantics reached two ways.
+
+⚠️ **§6: a child does NOT inherit permission to exceed limits.** A child built under a larger
+`max_depth` must have its cached depth summary compared **at its new nesting position** against the
+composing call's limit. Repeated inclusion of one child counts **each occurrence**.
+
+### ⛔ CORRECTION — a claim I filed here was overruled, and it was mine to get wrong
+
+The original V6 carried, as a condition on any future grant, `commonplace-cell`'s line that *the
+receiving side of a Cell boundary must still walk fully, because the sender's validation is a claim,
+not a proof.* I endorsed it and wrote it into this file.
+
+**§8.2 rules it TOO STRONG.** The correct rule:
+
+> *"A receiving **Realm** must fully decode and validate incoming canonical bytes. A receiving
+> **Cell** inside the same Realm may trust a `Commonplace.Value.t()` produced by the package."*
+
+Same-Realm Cells are separate **authorization** domains but share one **cooperative runtime-security**
+domain. The receiver must still authenticate the source and authorize target and verb — it need not
+semantically revalidate an already-constructed subtree to defend against code the Realm model
+already treats as cooperative. ⇒ *"If two Cells must distrust each other's runtime values, they must
+be placed in separate Realms."*
+
+⭐ **What survives, undiminished, is §8.3:** the struct **never crosses a Realm boundary** — only
+bytes do — and the receiving Realm performs all six steps including re-encode verification.
+**No flag, header, signature claim, or sender assertion skips it.** ⚠️ *Transport authentication
+proves something about the source of the bytes; it does not replace parsing and validating their
+structure.*
+
+⛔ **The shape of my error is worth more than the error.** I generalized a rule that was correct at
+the boundary where it was coined (**Realm** ingress) to a boundary that looked similar (**Cell**
+delivery), and it read as more rigorous, which is exactly why nobody would have challenged it.
+⭐ **"Be stricter" is not a safe default: it hard-codes a boundary in the wrong place, and the cost
+is invisible because everything still works.**
+
+---
+
+*Original entry, kept because it is the evidence the ruling was made on:*
 
 `%Commonplace.Value{}` is a struct. §5.1 rejects structs and §5.2 forbids converting structs to
 maps, and **the spec contains no carve-out for this package's own opaque type** — grepped, there is
@@ -186,3 +238,68 @@ control turns it red.
 
 ⚠️ **This is the difference between "the guard was tested" and "the guard cannot be tested, and here
 is why."** Only the second is true, and only the second survives someone deleting the guard.
+
+---
+
+## V8 — round map after the composition ruling
+
+**Decided by:** commonplace-value (Opus), 2026-08-25, sequencing only.
+
+The ruling adds work and changes what the **struct** must hold. §5 requires every constructed Value
+to retain or make cheaply available: canonical bytes · normalized term · encoded byte length · node
+count · maximum internal depth · maximum string byte length · maximum object member count · maximum
+array element count · a representation version.
+
+⭐ **Those are exactly the quantities round P2 is computing right now in order to ENFORCE limits.**
+P2 computes and discards them; P3 must build the struct that **retains** them. ⇒ **The ruling did
+not invalidate P2 — it gave its arithmetic a second consumer**, and P3's struct design is now
+constrained by §5 rather than free.
+
+| round | delivers | spec |
+| --- | --- | --- |
+| **P1** ✅ landed `6bbea45` | value domain: validation, normalization, UTF-8, RFC 6901 paths, errors | §5 §6.1 §6.2 §7 §15 |
+| **P2** ⏳ in flight | resource-limit accounting at one-below / exact / one-above | §13 §19.2 |
+| **P3** | RFC 8785 encoder · the opaque struct **carrying §5's cached metrics** · `new/2` `encode/1` `to_term/1` `equal?/2` · `max_bytes` · the imported corpus harness · anti-vacuity | §9 §10 §12 §13.1 §19.1 §19.3 · ruling §5 |
+| **P4** | canonical decoding, the re-encode byte gate, negative corpus | §11 §19.2 |
+| **P5** | **`compose/2`** — the ruling's 20 required tests (§11) and the 18-walk envelope regression fixture (§12) | ruling §2–§9, §11, §12 |
+| **P6** | boundary proof, cross-process determinism, differential bytes vs `Commonplace.Log.Jcs` over fixtures | §17 §18 §20.3 §20.17 |
+
+⚠️ **`compose/2` is P5, after decoding, and that ordering is forced by the ruling's own test list:**
+required test 18 is a *canonical encode/decode round-trip of the composed result*, and test 19 is
+*complete revalidation after crossing the cross-process Cell test boundary*. Both need P4.
+
+✅ **`commonplace-cell` is not blocked by that.** They chose the redundant safe path for their MVP
+before the ruling existed, and §13 confirms it was correct. **P3 is still their first pinnable sha**;
+`compose/2` is an optimization they adopt afterwards.
+
+---
+
+## V9 — the landing-script rule is now a TEST, not a demonstration
+
+**Required by:** the ruling §14. **Built by:** commonplace-value, 2026-08-25.
+
+§14 states the repository rule for release gates, of which item 5 is a deliverable:
+
+> *"a regression test substitutes a deliberately failing gate and proves the push command is never
+> reached."*
+
+⛔ **This property had been demonstrated here twice BY HAND** — once against the tail-piped form,
+once against a `pipefail`-stripped copy — **and a demonstration is not a regression test.** It fires
+when someone remembers to run it, and the entire finding was that a future tidy-up would silently
+disarm the gates. ⭐ **A remembered rule does not fire; a filed artifact does.**
+
+`bin/check-landing-refuses.sh` runs on the path to `main`. It is hermetic: a scratch repo with its
+own bare origin, so **the real `git push` line executes for real** in the green arm rather than being
+stubbed — *a stub would prove the stub*.
+
+| arm | measured |
+| --- | --- |
+| RED — failing gate | rc 70, scratch origin **unchanged**, refusal text present |
+| GREEN — passing gates | rc 0, scratch origin **advanced**, `LANDED:` verdict present |
+| the check's OWN red — `gate()` mutated not to exit | ✅ caught: scratch origin advanced `92aa732 → ebfb0ac`, `VERDICT: FAIL` |
+| the check's OWN blindness — substitution made inert | ✅ caught: `INSTRUMENT BLIND`, **exit 2**, distinct from exit 1 |
+
+⭐ **The last two rows are why this is a gate and not decoration.** The third proves it can observe
+the defect it hunts — *by watching an origin actually move*, not by reading the script. The fourth
+proves it refuses to render a verdict about work it never examined, which is the failure a gate is
+most likely to aim at itself.

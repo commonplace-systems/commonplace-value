@@ -11,6 +11,11 @@ Implementers: Sol, one round per tmux pane (ruling #25).
 byte-identical at `aac51f9`, sha256 `1ac9a437…`. **It is never edited.** Amendments go in
 `docs/spec-errata.md`.
 
+`docs/proposals/2026-08-25-value-composition-ruling.md` — jes's accepted design correction, 371
+lines, sha256 `b0cc25b4…`, filed at `83d5227`. ⭐ **Also never edited, and also pinned by
+`bin/check-spec-pristine.sh`** (both arms demonstrated). It adds `compose/2`, keeps `new/2` strict,
+and corrects the Cell-versus-Realm boundary claim — see errata **V6**.
+
 Its central guarantee, quoted: *a successfully constructed `Commonplace.Value` is inert,
 JSON-equivalent data with one deterministic RFC 8785 canonical byte representation.*
 
@@ -269,11 +274,16 @@ never compare an implementation against itself.** `commonplace-log`'s canonicali
 
 | round | delivers | spec |
 | --- | --- | --- |
-| **P1** | value domain: validation, numeric normalization, UTF-8, RFC 6901 paths, structured errors | §5 §6.1 §6.2 §7 §15 |
-| **P2** | resource-limit accounting at one-below / exact / one-above, depth-before-work, property generators | §13 §19.2 |
-| **P3** | RFC 8785 encoder, the opaque struct, `new/2` + `encode/1`, `max_bytes`, imported positive corpus, anti-vacuity harness | §9 §10 §13.1 §19.1 §19.3 |
-| **P4** | canonical decoding, the re-encode byte gate, `to_term/1` + `equal?/2`, negative corpus | §11 §12 §19.2 |
-| **P5** | boundary proof, cross-process determinism, differential byte check vs `Commonplace.Log.Jcs` over fixtures | §17 §18 §20.3 §20.17 |
+| **P1** ✅ `6bbea45` | value domain: validation, normalization, UTF-8, RFC 6901 paths, structured errors | §5 §6.1 §6.2 §7 §15 |
+| **P2** ⏳ in flight | resource-limit accounting at one-below / exact / one-above, depth-before-work, property generators | §13 §19.2 |
+| **P3** | RFC 8785 encoder, the opaque struct **carrying the ruling §5 cached metrics**, `new/2` + `encode/1` + `to_term/1` + `equal?/2`, `max_bytes`, corpus harness, anti-vacuity | §9 §10 §12 §13.1 §19.1 §19.3 |
+| **P4** | canonical decoding, the re-encode byte gate, negative corpus | §11 §19.2 |
+| **P5** | **`compose/2`** — the ruling's 20 required tests and the 18-walk envelope regression fixture | ruling §2–§12 |
+| **P6** | boundary proof, cross-process determinism, differential bytes vs `Commonplace.Log.Jcs` over fixtures | §17 §18 §20.3 §20.17 |
+
+⭐ **See `docs/spec-errata.md` V8 for why `compose/2` is P5 and not earlier** — the ruling's own
+required tests 18 and 19 need canonical decoding, which is P4. ✅ **P3 remains `commonplace-cell`'s
+first pinnable sha;** `compose/2` is an optimization they adopt after.
 
 ⚠️ **DEVIATION FROM SPEC §23, stated rather than smuggled.** §23 puts *"opaque type and bounded
 inspection"* in phase 1. It cannot go there: §9 makes **canonical bytes the identity-bearing
