@@ -91,6 +91,20 @@ gate() {  # gate <label> <cmd...>: run, keep the verdict line, stop on non-zero
   local out rc=0
   out=$("$@" 2>&1) || rc=$?   # `|| rc=$?`: under set -e a failing assignment exits BEFORE a following rc=$? (seen: silent rc=1, no REFUSED line)
   if [ "$rc" -ne 0 ]; then
+    # ⛔ EVERY FAILING TEST NAME, FIRST, AND ALL OF THEM. `tail -20` alone loses
+    # names: MEASURED on a 6-failure run, it showed 1 of 6. ⭐ A lost name turns a
+    # solvable defect into a permanent asterisk on a green suite -- three repos in
+    # this fleet hit an unexplained one-off failure the same afternoon and TWO of
+    # them could not say which test it was, one to `tail -1` and one to not
+    # recording it. The re-run is what destroys the evidence.
+    # ⚠️ `|| names_rc=$?` for the same reason gate() itself needs it: under
+    # `set -e` a grep that matches nothing exits 1 and would abort here.
+    local names names_rc=0
+    names=$(printf '%s\n' "$out" | grep -E '^[[:space:]]+[0-9]+\) (test|property|doctest) ') || names_rc=$?
+    if [ "$names_rc" -eq 0 ] && [ -n "$names" ]; then
+      echo "REFUSED: $label failed. EVERY failing test, in full:" >&2
+      printf '%s\n' "$names" >&2
+    fi
     echo "$out" | tail -20
     echo "REFUSED: $label failed (rc=$rc); not pushing." >&2
     # ⚠ THE MERGE ALREADY HAPPENED LOCALLY and is left in the tree. origin is

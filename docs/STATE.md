@@ -136,6 +136,43 @@ rests on it.
 ⛔ **This supersedes §2.1's warning as it applies to THIS repo.** §2.1 is kept because it is the
 measurement that caused the fix, and because any copy of the *old* shape elsewhere still has it.
 
+### 2.0a ⛔ NEVER LOSE A FAILING TEST'S NAME — MEASURED, and my own instruments lost it
+
+⭐ **A lost name turns a solvable defect into a permanent asterisk on a green suite.** Three repos in
+this fleet hit an unexplained one-off failure on 2026-08-25 and **two could not say which test it
+was** — one lost it to `tail -1`, one to not recording it. ⚠️ **The re-run is what destroys the
+evidence.**
+
+**Two places this repo lost names, both mine, both measured on a deliberately broken encoder:**
+
+| instrument | before | after |
+| --- | --- | --- |
+| `land-round.sh` `gate()` on failure | `tail -20` showed **1 of 6** failing test names | ✅ **6 of 6**, printed first and in full |
+| my per-round acceptance loop | `mix test --seed $s \| tail -1` shows only `156 tests, 6 failures` — **every name lost** | ⛔ see below |
+
+⛔ **THE ACCEPTANCE LOOP FORM I USED IN EVERY ROUND WAS WRONG.** Do not do this:
+
+```bash
+for s in 1 2 3 4 5; do mix test --seed $s | tail -1; done      # ⛔ names lost
+```
+
+Use a form that keeps the whole output and only *summarises* when green:
+
+```bash
+for s in 1 2 3 4 5; do
+  out=$(mix test --seed "$s" 2>&1) || { printf '%s\n' "$out"; echo "SEED $s FAILED"; break; }
+  printf '%s\n' "$out" | tail -1
+done
+```
+
+⚠️ **If a failure ever appears here: capture the FULL output, the SEED, and whether another Sol round
+was in flight — BEFORE re-running.** ⭐ The three fleet occurrences shared a shape — first-run or
+cold-build, under concurrency, never reproduced alone — and one was proven to be cross-clone resource
+contention between two worktrees of the same tree. **This repo runs up to six worktrees.**
+
+⛔ **A matching signature is not a cause.** One of the three had its shared-port hypothesis killed by
+measurement. **Record, then investigate — do not diagnose from the shape.**
+
 ### 2.1a ⚠️ A REFUSED landing leaves the rejected merge in LOCAL main
 
 Measured 2026-08-25 on the red arm above: `land-round.sh` merges **before** it runs the gates, so a
