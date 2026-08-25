@@ -149,40 +149,40 @@ and produced the round's most valuable result.
 
 ### 6.1 The encoder — §10
 
-<!-- ARM-PLANNED: encoder emits UTF-8 with no BOM and no insignificant whitespace -->
-<!-- ARM-PLANNED: encoder sorts object keys by UTF-16 code units -->
-<!-- ARM-PLANNED: encoder sorts object keys recursively at every depth -->
-<!-- ARM-PLANNED: encoder preserves array order -->
-<!-- ARM-PLANNED: encoder emits the required two character escapes -->
-<!-- ARM-PLANNED: encoder emits remaining C0 controls as lowercase u00xx escapes -->
-<!-- ARM-PLANNED: encoder leaves solidus and non control Unicode unescaped -->
-<!-- ARM-PLANNED: encoder spells 1e20 in decimal form and 1e21 with an explicit plus -->
-<!-- ARM-PLANNED: encoder spells 1e-6 in decimal form and 1e-7 in exponential form -->
-<!-- ARM-PLANNED: encoder emits negative zero as 0 -->
-<!-- ARM-PLANNED: encoder emits safe integers without an exponent -->
+<!-- ARM: encoder emits UTF-8 with no BOM and no insignificant whitespace -->
+<!-- ARM: encoder sorts object keys by UTF-16 code units -->
+<!-- ARM: encoder sorts object keys recursively at every depth -->
+<!-- ARM: encoder preserves array order -->
+<!-- ARM: encoder emits the required two character escapes -->
+<!-- ARM: encoder emits remaining C0 controls as lowercase u00xx escapes -->
+<!-- ARM: encoder leaves solidus and non control Unicode unescaped -->
+<!-- ARM: encoder spells 1e20 in decimal form and 1e21 with an explicit plus -->
+<!-- ARM: encoder spells 1e-6 in decimal form and 1e-7 in exponential form -->
+<!-- ARM: encoder emits negative zero as 0 -->
+<!-- ARM: encoder emits safe integers without an exponent -->
 
 ⭐ **The astral-key arm must use a key whose three orderings genuinely differ** — U+10000 against a
 U+E000..U+FFFF key. A BMP-only test passes under all three and measures nothing.
 
 ### 6.2 The struct and its metrics — §9, ruling §5
 
-<!-- ARM-PLANNED: new returns an opaque value whose canonical bytes are its identity -->
-<!-- ARM-PLANNED: constructed values carry every cached metric the composition ruling requires -->
-<!-- ARM-PLANNED: cached maximum depth is the value own internal depth not its nesting position -->
-<!-- ARM-PLANNED: inspect shows bounded metadata rather than the entire value -->
-<!-- ARM-PLANNED: inspect does not reveal a secret contained in the value -->
+<!-- ARM: new returns an opaque value whose canonical bytes are its identity -->
+<!-- ARM: constructed values carry every cached metric the composition ruling requires -->
+<!-- ARM: cached maximum depth is the value own internal depth not its nesting position -->
+<!-- ARM: inspect shows bounded metadata rather than the entire value -->
+<!-- ARM: inspect does not reveal a secret contained in the value -->
 
 ⭐ **The metrics arm must check each field against an independent recount**, not against the
 producer. ⚠️ *An implementation compared with itself agrees perfectly and proves nothing.*
 
 ### 6.3 The public API — §12, §14
 
-<!-- ARM-PLANNED: encode returns the canonical bytes of a constructed value -->
-<!-- ARM-PLANNED: to_term returns the normalized term -->
-<!-- ARM-PLANNED: equal? is canonical byte equality -->
-<!-- ARM-PLANNED: new of 1 and new of 1.0 construct equal values -->
-<!-- ARM-PLANNED: new of 0 and new of negative zero construct equal values encoding to 0 -->
-<!-- ARM-PLANNED: new rejects a Commonplace.Value struct as an ordinary term -->
+<!-- ARM: encode returns the canonical bytes of a constructed value -->
+<!-- ARM: to_term returns the normalized term -->
+<!-- ARM: equal? is canonical byte equality -->
+<!-- ARM: new of 1 and new of 1.0 construct equal values -->
+<!-- ARM: new of 0 and new of negative zero construct equal values encoding to 0 -->
+<!-- ARM: new rejects a Commonplace.Value struct as an ordinary term -->
 
 ⭐ **The last arm is the ruling §3 promise and it is a NEGATIVE about our own type:** `new/2` MUST
 keep rejecting `%Commonplace.Value{}` with `:struct_not_allowed`. ⛔ **It is the arm that goes red if
@@ -195,9 +195,9 @@ instead of bytes" go red.
 
 ### 6.4 `max_bytes` — §13.1, the arm P2 reserved
 
-<!-- ARM-PLANNED: construction accepts a term whose canonical bytes are exactly max_bytes -->
-<!-- ARM-PLANNED: construction rejects a term whose canonical bytes exceed max_bytes -->
-<!-- ARM-PLANNED: max_bytes is measured on canonical bytes rather than on the input term -->
+<!-- ARM: construction accepts a term whose canonical bytes are exactly max_bytes -->
+<!-- ARM: construction rejects a term whose canonical bytes exceed max_bytes -->
+<!-- ARM: max_bytes is measured on canonical bytes rather than on the input term -->
 
 ⭐ **The third arm is the whole point of §13 rule 1 and `conformance/canonical/017` is the fixture
 that makes it vivid:** 1,048,977 input bytes canonicalizing to 327. **A term far larger than
@@ -205,12 +205,12 @@ that makes it vivid:** 1,048,977 input bytes canonicalizing to 327. **A term far
 
 ### 6.5 The conformance harness — §19.1, §19.3
 
-<!-- ARM-PLANNED: conformance every canonical case encodes to its expected bytes -->
-<!-- ARM-PLANNED: conformance every valid values case encodes to its expected bytes -->
-<!-- ARM-PLANNED: conformance the deliberate mismatch cases are detected as mismatches -->
-<!-- ARM-PLANNED: conformance harness refuses to report green on an empty corpus directory -->
-<!-- ARM-PLANNED: conformance harness checks at least twenty nine cases -->
-<!-- ARM-PLANNED: property canonical bytes are identical across repeated construction -->
+<!-- ARM: conformance every canonical case encodes to its expected bytes -->
+<!-- ARM: conformance every valid values case encodes to its expected bytes -->
+<!-- ARM: conformance the deliberate mismatch cases are detected as mismatches -->
+<!-- ARM: conformance harness refuses to report green on an empty corpus directory -->
+<!-- ARM: conformance harness checks at least twenty nine cases -->
+<!-- ARM: property canonical bytes are identical across repeated construction -->
 
 ⛔ **`conformance/README.md` is normative for the format. Read it.** Key points:
 - `input.json` is authoritative **as raw bytes**; parse it with **`JSON.decode/1`** (permissive,

@@ -8,42 +8,42 @@ defmodule Commonplace.Value.DomainTest do
   @max_safe_integer 9_007_199_254_740_991
 
   test "domain accepts nil and true and false" do
-    assert {:ok, nil} = Domain.validate(nil)
-    assert {:ok, true} = Domain.validate(true)
-    assert {:ok, false} = Domain.validate(false)
+    assert {:ok, nil} = validate(nil)
+    assert {:ok, true} = validate(true)
+    assert {:ok, false} = validate(false)
   end
 
   test "domain accepts a UTF-8 string including astral plane characters" do
-    assert {:ok, "plain 😀 text"} = Domain.validate("plain 😀 text")
+    assert {:ok, "plain 😀 text"} = validate("plain 😀 text")
   end
 
   test "domain accepts an empty list an empty map and an empty string key" do
-    assert {:ok, []} = Domain.validate([])
-    assert {:ok, %{}} = Domain.validate(%{})
-    assert {:ok, %{"" => nil}} = Domain.validate(%{"" => nil})
+    assert {:ok, []} = validate([])
+    assert {:ok, %{}} = validate(%{})
+    assert {:ok, %{"" => nil}} = validate(%{"" => nil})
   end
 
   test "domain accepts nested lists and maps recursively" do
     input = %{"a" => [1.0, %{"b" => [true, nil]}]}
-    assert {:ok, %{"a" => [1, %{"b" => [true, nil]}]}} = Domain.validate(input)
+    assert {:ok, %{"a" => [1, %{"b" => [true, nil]}]}} = validate(input)
   end
 
   test "domain rejects an atom other than nil true false with :atom_not_allowed" do
-    assert_error(Domain.validate(%{"a" => [:nope]}), :atom_not_allowed, "/a/0")
+    assert_error(validate(%{"a" => [:nope]}), :atom_not_allowed, "/a/0")
   end
 
   test "domain rejects a tuple with :tuple_not_allowed" do
-    assert_error(Domain.validate(%{"tuple" => {1, 2}}), :tuple_not_allowed, "/tuple")
+    assert_error(validate(%{"tuple" => {1, 2}}), :tuple_not_allowed, "/tuple")
   end
 
   test "domain rejects a struct with :struct_not_allowed" do
-    assert_error(Domain.validate(%{"value" => %Limits{}}), :struct_not_allowed, "/value")
+    assert_error(validate(%{"value" => %Limits{}}), :struct_not_allowed, "/value")
   end
 
   test "domain rejects a struct that derives the JSON encoder protocol" do
     struct = ~D[2026-08-25]
     assert is_binary(JSON.encode!(struct))
-    assert_error(Domain.validate(%{"encoded" => struct}), :struct_not_allowed, "/encoded")
+    assert_error(validate(%{"encoded" => struct}), :struct_not_allowed, "/encoded")
   end
 
   test "domain rejects a pid a reference and a port with :runtime_reference_not_allowed" do
@@ -53,7 +53,7 @@ defmodule Commonplace.Value.DomainTest do
       index = String.to_integer(String.trim_leading(path, "/"))
 
       assert_error(
-        Domain.validate(List.replace_at([nil, nil, nil], index, term)),
+        validate(List.replace_at([nil, nil, nil], index, term)),
         :runtime_reference_not_allowed,
         path
       )
@@ -61,45 +61,45 @@ defmodule Commonplace.Value.DomainTest do
   end
 
   test "domain rejects a function with :unsupported_term" do
-    assert_error(Domain.validate(%{"fn" => fn -> :ok end}), :unsupported_term, "/fn")
+    assert_error(validate(%{"fn" => fn -> :ok end}), :unsupported_term, "/fn")
   end
 
   test "domain rejects an improper list with :improper_list" do
-    assert_error(Domain.validate(%{"items" => [1 | 2]}), :improper_list, "/items/1")
+    assert_error(validate(%{"items" => [1 | 2]}), :improper_list, "/items/1")
   end
 
   test "domain rejects a map with a non-string key with :non_string_key" do
-    assert_error(Domain.validate(%{"outer" => %{atom: 1}}), :non_string_key, "/outer")
+    assert_error(validate(%{"outer" => %{atom: 1}}), :non_string_key, "/outer")
   end
 
   test "domain rejects a non-UTF-8 binary with :invalid_utf8" do
-    assert_error(Domain.validate([<<255>>]), :invalid_utf8, "/0")
+    assert_error(validate([<<255>>]), :invalid_utf8, "/0")
   end
 
   test "domain rejects a non-UTF-8 object key with :invalid_utf8" do
-    assert_error(Domain.validate(%{"outer" => %{<<255>> => nil}}), :invalid_utf8, "/outer")
+    assert_error(validate(%{"outer" => %{<<255>> => nil}}), :invalid_utf8, "/outer")
   end
 
   test "domain rejects a bitstring that is not a binary" do
-    assert_error(Domain.validate(%{"bits" => <<1::1>>}), :unsupported_term, "/bits")
+    assert_error(validate(%{"bits" => <<1::1>>}), :unsupported_term, "/bits")
   end
 
   test "domain reports the exact path of a deeply nested rejected term" do
     input = %{"a" => [%{"b/c" => [0, 1, {:rejected}]}]}
-    assert_error(Domain.validate(input), :tuple_not_allowed, "/a/0/b~1c/2")
+    assert_error(validate(input), :tuple_not_allowed, "/a/0/b~1c/2")
   end
 
   test "domain accepts the maximum safe positive and negative integers" do
-    assert {:ok, @max_safe_integer} = Domain.validate(@max_safe_integer)
-    assert {:ok, -@max_safe_integer} = Domain.validate(-@max_safe_integer)
+    assert {:ok, @max_safe_integer} = validate(@max_safe_integer)
+    assert {:ok, -@max_safe_integer} = validate(-@max_safe_integer)
   end
 
   test "domain rejects an integer one above the maximum safe integer with :integer_out_of_range" do
-    assert_error(Domain.validate(@max_safe_integer + 1), :integer_out_of_range, "")
+    assert_error(validate(@max_safe_integer + 1), :integer_out_of_range, "")
   end
 
   test "domain rejects an integer one below the minimum safe integer with :integer_out_of_range" do
-    assert_error(Domain.validate(-@max_safe_integer - 1), :integer_out_of_range, "")
+    assert_error(validate(-@max_safe_integer - 1), :integer_out_of_range, "")
   end
 
   # ⭐ THE INSTRUMENT, NOT JUST AN ARM. Spec §5.1 requires NaN and infinities
@@ -145,28 +145,28 @@ defmodule Commonplace.Value.DomainTest do
   end
 
   test "domain normalizes negative zero to positive zero" do
-    assert {:ok, zero} = Domain.validate(-0.0)
+    assert {:ok, zero} = validate(-0.0)
     assert zero === 0
   end
 
   test "domain normalizes an integral float to an integer" do
-    assert {:ok, number} = Domain.validate(42.0)
+    assert {:ok, number} = validate(42.0)
     assert number === 42
   end
 
   test "domain leaves a non integral float as a float" do
-    assert {:ok, number} = Domain.validate(1.5)
+    assert {:ok, number} = validate(1.5)
     assert number === 1.5
   end
 
   test "domain rejects a float whose integral value is outside the safe range" do
-    assert {:ok, number} = Domain.validate(1.0e20)
+    assert {:ok, number} = validate(1.0e20)
     assert number === 1.0e20
   end
 
   test "error does not reproduce the rejected value" do
     secret = "DISTINCTIVE-SECRET-VALUE-7d6f5a"
-    assert {:error, %Error{} = error} = Domain.validate(%{"bad" => {:no, secret}})
+    assert {:error, %Error{} = error} = validate(%{"bad" => {:no, secret}})
 
     refute secret in Map.values(error)
     refute Exception.message(error) =~ secret
@@ -175,10 +175,17 @@ defmodule Commonplace.Value.DomainTest do
 
   test "invalid limits are returned as a structured construction error" do
     assert_error(
-      Domain.validate(nil, limits: %Limits{max_depth: 0}),
+      validate(nil, limits: %Limits{max_depth: 0}),
       :invalid_limits,
       ""
     )
+  end
+
+  defp validate(term, opts \\ []) do
+    case Domain.validate(term, opts) do
+      {:ok, normalized, _metrics} -> {:ok, normalized}
+      {:error, _error} = error -> error
+    end
   end
 
   defp assert_error(result, reason, path) do

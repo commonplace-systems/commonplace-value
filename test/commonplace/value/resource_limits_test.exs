@@ -10,19 +10,19 @@ defmodule Commonplace.Value.ResourceLimitsTest do
   @family "👨‍👩‍👧‍👦"
 
   test "domain counts the top level scalar as depth zero" do
-    assert {:ok, nil} = Domain.validate(nil, limits: limits(max_depth: 1))
+    assert {:ok, nil} = validate(nil, limits: limits(max_depth: 1))
   end
 
   test "domain accepts nesting at exactly max_depth" do
     limits = limits(max_depth: 3)
 
-    assert {:ok, _term_one_below} = Domain.validate(nested_list(2), limits: limits)
-    assert {:ok, _term_at_limit} = Domain.validate(nested_list(3), limits: limits)
+    assert {:ok, _term_one_below} = validate(nested_list(2), limits: limits)
+    assert {:ok, _term_at_limit} = validate(nested_list(3), limits: limits)
   end
 
   test "domain rejects nesting one level beyond max_depth with :max_depth_exceeded" do
     assert_limit_error(
-      Domain.validate(nested_list(4), limits: limits(max_depth: 3)),
+      validate(nested_list(4), limits: limits(max_depth: 3)),
       :max_depth_exceeded,
       "/0/0/0/0",
       3,
@@ -34,21 +34,21 @@ defmodule Commonplace.Value.ResourceLimitsTest do
     term = nested_list(150_000)
 
     assert {:error, %Error{reason: :max_depth_exceeded, limit: 64, actual: 65}} =
-             Domain.validate(term)
+             validate(term)
   end
 
   test "domain accepts a term with exactly max_nodes nodes" do
     limits = limits(max_nodes: 5)
 
-    assert {:ok, _one_below} = Domain.validate(%{"a" => [nil, true]}, limits: limits)
-    assert {:ok, _at_limit} = Domain.validate(%{"a" => [nil, true], "b" => %{}}, limits: limits)
+    assert {:ok, _one_below} = validate(%{"a" => [nil, true]}, limits: limits)
+    assert {:ok, _at_limit} = validate(%{"a" => [nil, true], "b" => %{}}, limits: limits)
   end
 
   test "domain rejects a term with one node beyond max_nodes" do
     term = List.duplicate(nil, 6)
 
     assert_limit_error(
-      Domain.validate(term, limits: limits(max_nodes: 6)),
+      validate(term, limits: limits(max_nodes: 6)),
       :max_nodes_exceeded,
       "/5",
       6,
@@ -63,32 +63,32 @@ defmodule Commonplace.Value.ResourceLimitsTest do
     assert independent_count == 6
 
     assert {:ok, _normalized} =
-             Domain.validate(term, limits: limits(max_nodes: independent_count))
+             validate(term, limits: limits(max_nodes: independent_count))
 
     assert {:error, %Error{reason: :max_nodes_exceeded, actual: ^independent_count}} =
-             Domain.validate(term, limits: limits(max_nodes: independent_count - 1))
+             validate(term, limits: limits(max_nodes: independent_count - 1))
   end
 
   test "object keys do not add a second node to their member values" do
     term = %{"key" => 1}
 
     assert independent_node_count(term) == 2
-    assert {:ok, ^term} = Domain.validate(term, limits: limits(max_nodes: 2))
+    assert {:ok, ^term} = validate(term, limits: limits(max_nodes: 2))
 
     assert {:error, %Error{reason: :max_nodes_exceeded, limit: 1, actual: 2}} =
-             Domain.validate(term, limits: limits(max_nodes: 1))
+             validate(term, limits: limits(max_nodes: 1))
   end
 
   test "domain accepts a string of exactly max_string_bytes" do
     limits = limits(max_string_bytes: 25)
 
-    assert {:ok, _one_below} = Domain.validate(String.duplicate("x", 24), limits: limits)
-    assert {:ok, @family} = Domain.validate(@family, limits: limits)
+    assert {:ok, _one_below} = validate(String.duplicate("x", 24), limits: limits)
+    assert {:ok, @family} = validate(@family, limits: limits)
   end
 
   test "domain rejects a string one byte beyond max_string_bytes" do
     assert_limit_error(
-      Domain.validate(String.duplicate("x", 26), limits: limits(max_string_bytes: 25)),
+      validate(String.duplicate("x", 26), limits: limits(max_string_bytes: 25)),
       :max_string_bytes_exceeded,
       "",
       25,
@@ -102,14 +102,14 @@ defmodule Commonplace.Value.ResourceLimitsTest do
     assert byte_size(@family) == 25
 
     assert {:error, %Error{reason: :max_string_bytes_exceeded, actual: 25}} =
-             Domain.validate(@family, limits: limits(max_string_bytes: 7))
+             validate(@family, limits: limits(max_string_bytes: 7))
   end
 
   test "domain applies max_string_bytes to object keys as well as values" do
     key = String.duplicate("key", 4)
 
     assert_limit_error(
-      Domain.validate(%{key => nil}, limits: limits(max_string_bytes: 11)),
+      validate(%{key => nil}, limits: limits(max_string_bytes: 11)),
       :max_string_bytes_exceeded,
       "/#{key}",
       11,
@@ -120,13 +120,13 @@ defmodule Commonplace.Value.ResourceLimitsTest do
   test "domain accepts an object with exactly max_object_members" do
     limits = limits(max_object_members: 3)
 
-    assert {:ok, _one_below} = Domain.validate(object(2), limits: limits)
-    assert {:ok, _at_limit} = Domain.validate(object(3), limits: limits)
+    assert {:ok, _one_below} = validate(object(2), limits: limits)
+    assert {:ok, _at_limit} = validate(object(3), limits: limits)
   end
 
   test "domain rejects an object with one member beyond max_object_members" do
     assert_limit_error(
-      Domain.validate(%{"outer" => object(4)}, limits: limits(max_object_members: 3)),
+      validate(%{"outer" => object(4)}, limits: limits(max_object_members: 3)),
       :max_object_members_exceeded,
       "/outer",
       3,
@@ -137,13 +137,13 @@ defmodule Commonplace.Value.ResourceLimitsTest do
   test "domain accepts an array with exactly max_array_elements" do
     limits = limits(max_array_elements: 3)
 
-    assert {:ok, _one_below} = Domain.validate(List.duplicate(nil, 2), limits: limits)
-    assert {:ok, _at_limit} = Domain.validate(List.duplicate(nil, 3), limits: limits)
+    assert {:ok, _one_below} = validate(List.duplicate(nil, 2), limits: limits)
+    assert {:ok, _at_limit} = validate(List.duplicate(nil, 3), limits: limits)
   end
 
   test "domain rejects an array with one element beyond max_array_elements" do
     assert_limit_error(
-      Domain.validate(%{"outer" => List.duplicate(nil, 4)},
+      validate(%{"outer" => List.duplicate(nil, 4)},
         limits: limits(max_array_elements: 3)
       ),
       :max_array_elements_exceeded,
@@ -155,12 +155,12 @@ defmodule Commonplace.Value.ResourceLimitsTest do
 
   test "limit errors report both the limit and the actual value" do
     assert {:error, %Error{limit: 8, actual: 9}} =
-             Domain.validate(String.duplicate("x", 9), limits: limits(max_string_bytes: 8))
+             validate(String.duplicate("x", 9), limits: limits(max_string_bytes: 8))
   end
 
   test "limit errors report the JSON Pointer path of the offending container" do
     assert_limit_error(
-      Domain.validate(%{"nested" => %{"items" => [1, 2, 3]}},
+      validate(%{"nested" => %{"items" => [1, 2, 3]}},
         limits: limits(max_array_elements: 2)
       ),
       :max_array_elements_exceeded,
@@ -174,7 +174,7 @@ defmodule Commonplace.Value.ResourceLimitsTest do
     secret = "DISTINCTIVE-LIMIT-SECRET-2f6fc120"
 
     assert {:error, %Error{} = error} =
-             Domain.validate([secret], limits: limits(max_string_bytes: byte_size(secret) - 1))
+             validate([secret], limits: limits(max_string_bytes: byte_size(secret) - 1))
 
     refute secret in Map.values(error)
     refute Exception.message(error) =~ secret
@@ -183,14 +183,14 @@ defmodule Commonplace.Value.ResourceLimitsTest do
 
   test "domain honours a stricter caller supplied limit set" do
     assert {:error, %Error{reason: :max_string_bytes_exceeded, limit: 2, actual: 3}} =
-             Domain.validate("abc", limits: limits(max_string_bytes: 2))
+             validate("abc", limits: limits(max_string_bytes: 2))
   end
 
   test "domain honours an explicitly larger finite caller supplied limit set" do
     string = String.duplicate("x", %Limits{}.max_string_bytes + 1)
     larger = limits(max_string_bytes: byte_size(string))
 
-    assert {:ok, ^string} = Domain.validate(string, limits: larger)
+    assert {:ok, ^string} = validate(string, limits: larger)
   end
 
   test "property every generated portable term within limits is accepted" do
@@ -204,13 +204,13 @@ defmodule Commonplace.Value.ResourceLimitsTest do
           max_array_elements: 5
         )
 
-      assert {:ok, _normalized} = Domain.validate(term, limits: generous)
+      assert {:ok, _normalized} = validate(term, limits: generous)
     end
   end
 
   test "property every generated term exceeding a limit is rejected with that limit reason" do
     check all({term, limits, reason} <- ValueGenerators.exceeding_limit(), max_runs: 75) do
-      assert {:error, %Error{reason: ^reason}} = Domain.validate(term, limits: limits)
+      assert {:error, %Error{reason: ^reason}} = validate(term, limits: limits)
     end
   end
 
@@ -229,6 +229,13 @@ defmodule Commonplace.Value.ResourceLimitsTest do
   end
 
   defp independent_node_count(_scalar), do: 1
+
+  defp validate(term, opts \\ []) do
+    case Domain.validate(term, opts) do
+      {:ok, normalized, _metrics} -> {:ok, normalized}
+      {:error, _error} = error -> error
+    end
+  end
 
   defp limits(overrides), do: struct!(Limits, overrides)
 

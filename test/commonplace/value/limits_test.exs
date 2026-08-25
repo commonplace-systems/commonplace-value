@@ -34,7 +34,7 @@ defmodule Commonplace.Value.LimitsTest do
   end
 
   test "limits validation accepts the default limit set" do
-    assert {:ok, nil} = Domain.validate(nil, limits: %Limits{})
+    assert {:ok, nil, _metrics} = Domain.validate(nil, limits: %Limits{})
   end
 
   test "limits validation rejects a zero or negative bound with :invalid_limits" do

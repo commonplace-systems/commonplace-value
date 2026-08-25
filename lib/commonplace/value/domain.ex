@@ -1,7 +1,7 @@
 defmodule Commonplace.Value.Domain do
   @moduledoc false
 
-  alias Commonplace.Value.{Error, Limits, Pointer}
+  alias Commonplace.Value.{Error, Limits, Metrics, Pointer}
 
   @max_safe_integer 9_007_199_254_740_991
 
@@ -14,13 +14,13 @@ defmodule Commonplace.Value.Domain do
           | [normalized_term()]
           | %{String.t() => normalized_term()}
 
-  @spec validate(term(), keyword()) :: {:ok, normalized_term()} | {:error, Error.t()}
+  @spec validate(term(), keyword()) :: {:ok, normalized_term(), Metrics.t()} | {:error, Error.t()}
   def validate(term, opts \\ []) do
     limits = Keyword.get(opts, :limits, %Limits{})
 
     with :ok <- validate_limits(limits),
-         {:ok, normalized, _nodes} <- normalize(term, [], 0, limits, 0) do
-      {:ok, normalized}
+         {:ok, normalized, metrics} <- normalize(term, [], 0, limits, Metrics.empty()) do
+      {:ok, normalized, metrics}
     end
   end
 
@@ -31,44 +31,45 @@ defmodule Commonplace.Value.Domain do
     end
   end
 
-  defp normalize(term, path, depth, limits, nodes) do
+  defp normalize(term, path, depth, limits, metrics) do
     with :ok <- check_depth(depth, path, limits),
-         {:ok, nodes} <- count_node(nodes, path, limits) do
-      normalize_term(term, path, depth, limits, nodes)
+         {:ok, metrics} <- count_node(metrics, path, limits) do
+      metrics = %{metrics | maximum_internal_depth: max(metrics.maximum_internal_depth, depth)}
+      normalize_term(term, path, depth, limits, metrics)
     end
   end
 
-  defp normalize_term(nil, _path, _depth, _limits, nodes), do: {:ok, nil, nodes}
-  defp normalize_term(true, _path, _depth, _limits, nodes), do: {:ok, true, nodes}
-  defp normalize_term(false, _path, _depth, _limits, nodes), do: {:ok, false, nodes}
+  defp normalize_term(nil, _path, _depth, _limits, metrics), do: {:ok, nil, metrics}
+  defp normalize_term(true, _path, _depth, _limits, metrics), do: {:ok, true, metrics}
+  defp normalize_term(false, _path, _depth, _limits, metrics), do: {:ok, false, metrics}
 
   defp normalize_term(term, path, _depth, _limits, _nodes) when is_atom(term),
     do: error(:atom_not_allowed, path)
 
-  defp normalize_term(term, _path, _depth, _limits, nodes)
+  defp normalize_term(term, _path, _depth, _limits, metrics)
        when is_integer(term) and term >= -@max_safe_integer and term <= @max_safe_integer,
-       do: {:ok, term, nodes}
+       do: {:ok, term, metrics}
 
   defp normalize_term(term, path, _depth, _limits, _nodes) when is_integer(term),
     do: error(:integer_out_of_range, path)
 
-  defp normalize_term(term, path, _depth, _limits, nodes) when is_float(term) do
+  defp normalize_term(term, path, _depth, _limits, metrics) when is_float(term) do
     cond do
       not finite?(term) ->
         error(:non_finite_number, path)
 
       term == 0.0 ->
-        {:ok, 0, nodes}
+        {:ok, 0, metrics}
 
       integral_in_safe_range?(term) ->
-        {:ok, trunc(term), nodes}
+        {:ok, trunc(term), metrics}
 
       true ->
-        {:ok, term, nodes}
+        {:ok, term, metrics}
     end
   end
 
-  defp normalize_term(term, path, _depth, limits, nodes) when is_binary(term) do
+  defp normalize_term(term, path, _depth, limits, metrics) when is_binary(term) do
     cond do
       not String.valid?(term) ->
         error(:invalid_utf8, path)
@@ -82,31 +83,51 @@ defmodule Commonplace.Value.Domain do
         )
 
       true ->
-        {:ok, term, nodes}
+        metrics = %{
+          metrics
+          | maximum_string_byte_length: max(metrics.maximum_string_byte_length, byte_size(term))
+        }
+
+        {:ok, term, metrics}
     end
   end
 
   defp normalize_term(term, path, _depth, _limits, _nodes) when is_bitstring(term),
     do: error(:unsupported_term, path)
 
-  defp normalize_term([], path, _depth, limits, nodes) do
-    with :ok <- check_array_size([], path, limits) do
-      {:ok, [], nodes}
+  defp normalize_term([], path, _depth, limits, metrics) do
+    with {:ok, size} <- check_array_size([], path, limits) do
+      metrics = %{
+        metrics
+        | maximum_array_element_count: max(metrics.maximum_array_element_count, size)
+      }
+
+      {:ok, [], metrics}
     end
   end
 
-  defp normalize_term([_head | _tail] = term, path, depth, limits, nodes) do
-    with :ok <- check_array_size(term, path, limits) do
-      normalize_list(term, path, depth + 1, limits, nodes, 0, [])
+  defp normalize_term([_head | _tail] = term, path, depth, limits, metrics) do
+    with {:ok, size} <- check_array_size(term, path, limits) do
+      metrics = %{
+        metrics
+        | maximum_array_element_count: max(metrics.maximum_array_element_count, size)
+      }
+
+      normalize_list(term, path, depth + 1, limits, metrics, 0, [])
     end
   end
 
   defp normalize_term(%_{} = _term, path, _depth, _limits, _nodes),
     do: error(:struct_not_allowed, path)
 
-  defp normalize_term(term, path, depth, limits, nodes) when is_map(term) do
-    with :ok <- check_object_size(term, path, limits) do
-      normalize_map(Map.to_list(term), path, depth + 1, limits, nodes, %{})
+  defp normalize_term(term, path, depth, limits, metrics) when is_map(term) do
+    with {:ok, size} <- check_object_size(term, path, limits) do
+      metrics = %{
+        metrics
+        | maximum_object_member_count: max(metrics.maximum_object_member_count, size)
+      }
+
+      normalize_map(Map.to_list(term), path, depth + 1, limits, metrics, %{})
     end
   end
 
@@ -122,26 +143,28 @@ defmodule Commonplace.Value.Domain do
 
   defp normalize_term(_term, path, _depth, _limits, _nodes), do: error(:unsupported_term, path)
 
-  defp normalize_list([], _path, _depth, _limits, nodes, _index, acc) do
-    {:ok, Enum.reverse(acc), nodes}
+  defp normalize_list([], _path, _depth, _limits, metrics, _index, acc) do
+    {:ok, Enum.reverse(acc), metrics}
   end
 
-  defp normalize_list([head | tail], path, depth, limits, nodes, index, acc) do
-    with {:ok, normalized_head, nodes} <- normalize(head, [index | path], depth, limits, nodes) do
-      normalize_list(tail, path, depth, limits, nodes, index + 1, [normalized_head | acc])
+  defp normalize_list([head | tail], path, depth, limits, metrics, index, acc) do
+    with {:ok, normalized_head, metrics} <-
+           normalize(head, [index | path], depth, limits, metrics) do
+      normalize_list(tail, path, depth, limits, metrics, index + 1, [normalized_head | acc])
     end
   end
 
-  defp normalize_map([], _path, _depth, _limits, nodes, acc), do: {:ok, acc, nodes}
+  defp normalize_map([], _path, _depth, _limits, metrics, acc), do: {:ok, acc, metrics}
 
-  defp normalize_map([{key, value} | rest], path, depth, limits, nodes, acc) do
-    with :ok <- validate_key(key, path, limits),
-         {:ok, normalized_value, nodes} <- normalize(value, [key | path], depth, limits, nodes) do
-      normalize_map(rest, path, depth, limits, nodes, Map.put(acc, key, normalized_value))
+  defp normalize_map([{key, value} | rest], path, depth, limits, metrics, acc) do
+    with {:ok, metrics} <- validate_key(key, path, limits, metrics),
+         {:ok, normalized_value, metrics} <-
+           normalize(value, [key | path], depth, limits, metrics) do
+      normalize_map(rest, path, depth, limits, metrics, Map.put(acc, key, normalized_value))
     end
   end
 
-  defp validate_key(key, path, limits) do
+  defp validate_key(key, path, limits, metrics) do
     cond do
       not is_binary(key) ->
         error(:non_string_key, path)
@@ -158,7 +181,11 @@ defmodule Commonplace.Value.Domain do
         )
 
       true ->
-        :ok
+        {:ok,
+         %{
+           metrics
+           | maximum_string_byte_length: max(metrics.maximum_string_byte_length, byte_size(key))
+         }}
     end
   end
 
@@ -170,20 +197,20 @@ defmodule Commonplace.Value.Domain do
     end
   end
 
-  defp count_node(nodes, path, limits) do
-    actual = nodes + 1
+  defp count_node(metrics, path, limits) do
+    actual = metrics.node_count + 1
 
     if actual > limits.max_nodes do
       limit_error(:max_nodes_exceeded, path, limits.max_nodes, actual)
     else
-      {:ok, actual}
+      {:ok, %{metrics | node_count: actual}}
     end
   end
 
   defp check_array_size(term, path, limits) do
     case bounded_list_size(term, limits.max_array_elements, 0) do
-      {:ok, _actual} ->
-        :ok
+      {:ok, actual} ->
+        {:ok, actual}
 
       {:limit, actual} ->
         limit_error(:max_array_elements_exceeded, path, limits.max_array_elements, actual)
@@ -209,7 +236,7 @@ defmodule Commonplace.Value.Domain do
     if actual > limits.max_object_members do
       limit_error(:max_object_members_exceeded, path, limits.max_object_members, actual)
     else
-      :ok
+      {:ok, actual}
     end
   end
 
