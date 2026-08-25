@@ -24,6 +24,12 @@ git merge --no-ff -q "$branch" -m "Merge branch '$branch'"
 mix deps.get >/dev/null 2>&1 || true
 mix test 2>&1 | tail -1
 bash bin/check-plan-arms.sh | tail -1
+# ⛔ ADDED HERE, not inherited: commonplace-doc's copy of this script has no
+# spec-pristine line, so the gate existed in bin/ and was on NO path to main.
+# A gate nothing invokes is indistinguishable from one that always passes.
+# Its RED arm is demonstrated in docs/STATE.md §2; pipefail above is what makes
+# this line a gate rather than a print.
+bash bin/check-spec-pristine.sh | tail -1
 git push -q origin main "$branch"
 git fetch -q origin
 # ⭐ The verdict is what origin says, not what push returned.
