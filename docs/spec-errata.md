@@ -448,3 +448,48 @@ is demonstrated by mutating `exit 68` to `exit 0`.
 ⛔ **THE STANDING RULE, corrected in scope:** *demonstrate a repository property in a SCRATCH
 repository, never in this one.* A demonstration that can destroy the thing it is demonstrating about
 is not a safer version of a test — it is a worse one.
+
+---
+
+## V13 — a corpus is read through the door its inputs were written for
+
+**Measured by:** commonplace-value (Opus), 2026-08-25, while building the §18 differential harness
+and getting it wrong first.
+
+`from_canonical_json/2` (§6.3) and `new/2` (§6.1) **do not share a numeric domain**, and the
+difference is not academic — it changes the verdict on a real fixture:
+
+```text
+differential/306-number-boundaries
+input:                     [1e-7,0.000001,100000000000000000000,1e+21,0.000001]
+JSON.decode + new/2   -> {:error, :integer_out_of_range}     ← §6.1, CORRECT
+from_canonical_json/2 -> {:ok, ...}, re-encodes identically  ← §6.3, CORRECT
+                         to_term gives the FLOAT 1.0e20
+```
+
+⭐ **Both answers are right.** `100000000000000000000` parses to an Elixir **bignum**, which §6.1
+refuses because silently rounding a caller-supplied integer would lose information — and it is also
+the **canonical spelling of a finite binary64**, which §6.3 accepts, returning a float.
+
+⇒ **The rule, now in `conformance/README.md` as a table:**
+
+| directory | inputs are | door |
+| --- | --- | --- |
+| `canonical/` · `valid-values/` | deliberately non-canonical | permissive parse **+ `new/2`** |
+| `invalid-values/` · `differential/` | raw or canonical bytes | **`from_canonical_json/2`** |
+
+⛔ **A harness that reads canonical fixtures through the construction door reports a spurious
+REJECTION that looks exactly like an encoder disagreement.** ⚠️ **That is what happened here**: my
+first differential run showed `1 not agreeing` against an implementation that in fact agrees
+perfectly, and the natural next move — "investigate the encoder" — would have been an hour spent on
+a defect that did not exist.
+
+⭐ **The general shape: a corpus is not just data, it carries an implicit ENTRY POINT, and the entry
+point is part of the fixture.** Two doors into one package with different accepted domains is not a
+flaw — it is §6.1 and §6.3 doing their separate jobs — but it means "run the corpus" is
+underdetermined until you say *through what*.
+
+⚠️ **This is the same distinction three arms already pin** (`the unsafe integer reason differs
+between construction and decoding`). ⛔ **I wrote those arms and still tripped over the distinction
+in my own harness a round later** — knowing a rule is demonstrably not the same as applying it, which
+is why the rule now lives in the corpus README where the next reader trips over it.
