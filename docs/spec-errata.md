@@ -530,9 +530,17 @@ it is worth exactly what its expansion is worth.**
 
 **Assessed by:** the Sol implementer of round P6; reviewed and accepted here.
 
-⭐ **All twenty of spec §20's acceptance items now have a NAMED green arm.** The full mapping is in
-round P6's report. Nothing in this repo claims an item without naming the arm that would go red —
-`docs/STATE.md` §1.
+⭐ **All twenty of spec §20's acceptance items now have a NAMED green arm.** The full mapping is
+**`docs/ACCEPTANCE-20.md`**, gated by `bin/check-acceptance-arms.sh`, which fails if any arm named
+there is not a real test.
+
+⛔ **THIS ENTRY ORIGINALLY CITED "round P6's report" — A 1 MB UNTRACKED FILE IN A SCRATCH ROUND
+DIRECTORY.** The repo's completion claim rested on something not in the repo, in a directory I had
+been discussing removing as housekeeping an hour earlier. ⚠️ **`docs/STATE.md` §1 says a claim about
+the code must cite a test BY NAME; I satisfied it by citing a document that was not here.** Found by
+`commonplace-plan`'s README survey, not by me. Committing the table then surfaced two further
+defects in it — an ellipsis standing in for arm names, and a hyphenated arm name matching no test —
+both recorded in that file.
 
 ⛔ **§24's completion statement is NOT fully demonstrated, and that is the honest result.** Two of
 its four clauses hold; two do not:
