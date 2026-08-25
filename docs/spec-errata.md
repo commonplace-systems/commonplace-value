@@ -493,3 +493,63 @@ underdetermined until you say *through what*.
 between construction and decoding`). ⛔ **I wrote those arms and still tripped over the distinction
 in my own harness a round later** — knowing a rule is demonstrably not the same as applying it, which
 is why the rule now lives in the corpus README where the next reader trips over it.
+
+---
+
+## V14 — `lib/**/*.ex` means different things in bash and in Elixir — MEASURED
+
+**Measured by:** commonplace-value (Opus), 2026-08-25, after writing the broken one myself.
+
+Reviewing P6's dependency-hygiene test I doubted its glob, because **I had used the same pattern in
+bash an hour earlier and it silently missed a directory level.** Measured on this tree:
+
+| form | files found |
+| --- | --- |
+| `find lib -name '*.ex'` — ground truth | **9** |
+| Elixir `Path.wildcard("lib/**/*.ex")` | **9** ✅ |
+| bash `ls lib/**/*.ex` (no `globstar`) | **1** ⛔ |
+
+⇒ **Elixir's `**` matches zero or more directories; bash's `**` without `shopt -s globstar` is just
+`*` and does not cross `/`.** The test's glob is correct. Mine was the broken one, and it reported
+`98` lines of `lib/` where the true figure is `1146`.
+
+⭐ **The file COUNT looked right, so nothing seemed wrong** — I caught it only because 98 lines was
+implausible for nine files. ⛔ **A wrong number is rarely the one that looks wrong.**
+
+⇒ **Both scans in this repo now assert a non-empty corpus and report what they searched**, so a
+future breakage announces itself: `dependency scan searched zero lib files`, and the
+`conformance scan searched zero cases under <root>` message in the coverage test.
+
+⚠️ **Same hazard as the fleet's `grep 'git push'` corrections tonight, in a new carrier:** an
+identical-looking pattern with different semantics per tool. **A glob is a claim about a corpus, and
+it is worth exactly what its expansion is worth.**
+
+---
+
+## V15 — 0.1 acceptance: §20 is closed, §24 is NOT, and the gap is named
+
+**Assessed by:** the Sol implementer of round P6; reviewed and accepted here.
+
+⭐ **All twenty of spec §20's acceptance items now have a NAMED green arm.** The full mapping is in
+round P6's report. Nothing in this repo claims an item without naming the arm that would go red —
+`docs/STATE.md` §1.
+
+⛔ **§24's completion statement is NOT fully demonstrated, and that is the honest result.** Two of
+its four clauses hold; two do not:
+
+| §24 clause | status |
+| --- | --- |
+| two implementations emit identical bytes over the shared accepted corpus | ✅ over the **12 recorded differential cases** — `every differential case matches the bytes recorded from commonplace-log JCS` |
+| Elixir callers may treat a constructed Value as proof no rejected term or unbounded container crossed | ✅ the category, path, resource-limit and boundary-proof arms |
+| two implementations agree on **every pinned REJECTION** | ⛔ **NOT demonstrated.** `Commonplace.Log.Jcs` is a *canonicalizer*, not a validator with this package's accepted domain, so **no second implementation's rejection results exist to compare against.** Closing this needs a second implementation of §5/§6/§11 — not more tests here |
+| "small enough that its complete public contract can be audited directly" | ⛔ **not arm-able.** The module gate proves `lib/` holds exactly nine declared modules; **that is a proxy for size, not a measurement of auditability** |
+
+⚠️ **AND THE BOUNDARY PROOF IS COOPERATIVE, NOT ADVERSARIAL.** Spec §17 and ruling §8.1 both say so:
+this package cannot stop arbitrary Elixir code sharing a BEAM VM from bypassing a router with
+`send/2`, and opacity is not a cryptographic seal. ⭐ **The arms prove what can cross THROUGH THE
+VALUE API. They do not prove what a hostile same-VM program can do**, and the test module says so in
+its own docstring.
+
+⇒ **0.1 is complete against §20 and honestly short of §24's second half.** ⛔ **The remedy is a
+second implementation, which is not this repository's to write** — recording it as an open gap is
+the correct end state, not a reason to weaken the criterion.
