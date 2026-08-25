@@ -216,6 +216,41 @@ cd /home/jes/commonplace-value && bash bin/dispatch-round.sh $D "phase $N"
 until ! kill -0 $(cat $D/outer.pid) 2>/dev/null; do sleep 15; done
 ```
 
+### ⛔ COUNTING ROUNDS IN FLIGHT: match on `comm`, NEVER on args
+
+```bash
+pgrep -u jes -x codex | xargs -r ps -o pgid= -p | tr -d ' ' | sort -u | wc -l
+```
+
+⚠️ **MEASURED 2026-08-25, and my own waiter had this wrong all night.** Three forms, same moment:
+
+| form | reported | truth |
+| --- | --- | --- |
+| `ps -eo args \| grep -c '[c]odex exec'` | **9** | 4–5 processes per round |
+| `ps -eo pgid,args \| grep '[c]odex exec'`, PGID-deduped — **what my waiter used** | **3** | ⛔ still wrong |
+| `pgrep -u jes -x codex`, PGID-deduped | **2** | ✅ |
+
+⭐ **THE REASON IS NOT THE ONE YOU'D GUESS, AND IT IS THIS REPO'S PHANTOM-ARM BUG IN A NEW CARRIER.**
+The fleet's stated reason is per-round process fan-out (bwrap parents, node wrappers). Real, but
+smaller. **Matching on ARGS also counts every process whose command line merely MENTIONS the
+pattern** — and while this was being investigated, the matches included:
+
+- another agent's shell writing *documentation about this very trap*, whose prose contained the
+  literal string;
+- another agent's script printing `raw 'codex exec' processes:`;
+- **my own diagnostic command**, whose `grep -o` argument was unbracketed.
+
+⇒ ⛔ **PROSE ABOUT A PATTERN CONTAINS THE PATTERN.** The more carefully the fleet documents this
+trap, the more the args-based counter over-counts. ⭐ **Exactly the failure in §1 above**, where this
+file's description of an `ARM` marker *became* an arm — **second occurrence, different carrier.**
+
+✅ **`comm` is the executable name. Prose cannot be an executable called `codex`.** That is
+safe-by-construction, not safe-by-care — the same standard as §2.0.
+
+⚠️ **Which direction this fails matters:** over-counting makes a waiter refuse to dispatch into slots
+that are already free — **self-inflicted starvation, invisible because the cap's own refusal is the
+real gate and a waiter simply polls again.** It never announces itself.
+
 `dispatch-round.sh` REFUSES on: no worktree · empty/short prompt · prompt not naming the round ·
 HEAD on no remote ref · dirty tree. It verifies **both fence layers on the running pid** (tmpfs mask
 count in `/proc/<pid>/mountinfo`, and `-C <wt>` in the cmdline — the `-C` is the write fence) and
