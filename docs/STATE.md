@@ -107,6 +107,30 @@ reading** (spec mutated via `bin/mutate.sh`, `REACHED_PUSH` stands in for the `g
 ⭐ **All three cells were run.** The middle row is what a `pipefail`-less copy of this script does
 today, in any repo that has one.
 
+### 2.0 ⭐ THE STANDARD IS SAFE-BY-CONSTRUCTION, NOT SAFE-TODAY — and this repo MEETS it, measured
+
+`commonplace-plan`'s framing, adopted here: the question is not *"is `pipefail` set?"* but **"would
+deleting it change anything?"** ⭐ **A gate protected by a shell option three lines away is one
+tidy-up from decoration; a gate whose rc it captures itself cannot be disarmed that way.**
+
+**Measured 2026-08-25, not reasoned.** A copy of `bin/land-round.sh` with `set -euo pipefail`
+rewritten to `set -eu` (positive control: 2 `pipefail` lines in the original, 1 in the copy — the
+remaining one is a comment), run against a throwaway branch carrying a phantom arm:
+
+```
+REFUSED: check-plan-arms failed (rc=1); not pushing.
+REFUSED: local main still holds the rejected merge. Undo with: git reset --hard ce89ddf
+rc=70          origin/main unchanged: YES
+```
+
+⇒ **The gates here do not depend on `pipefail`.** `gate()` captures rc with `out=$("$@" 2>&1) ||
+rc=$?` and the `| tail` calls run **after** that, shaping output only. ⚠️ **`pipefail` stays set
+anyway** — it costs nothing and protects anything added later that forgets — but nothing load-bearing
+rests on it.
+
+⛔ **This supersedes §2.1's warning as it applies to THIS repo.** §2.1 is kept because it is the
+measurement that caused the fix, and because any copy of the *old* shape elsewhere still has it.
+
 ### 2.1a ⚠️ A REFUSED landing leaves the rejected merge in LOCAL main
 
 Measured 2026-08-25 on the red arm above: `land-round.sh` merges **before** it runs the gates, so a
