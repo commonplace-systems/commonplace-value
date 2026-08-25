@@ -74,6 +74,7 @@ gate.** Every row below must have both arms demonstrated before it is trusted.
 | `check-plan-arms.sh` — undeclared module | ✅ same run, `undeclared modules: 0` | ✅ dropped `Commonplace.Value.Sneaky` into `lib/` → `VERDICT: FAIL -- 0 declared arm(s) with no test, 1 undeclared module(s).` |
 | `check-plan-arms.sh --self-test` | ✅ `SELF-TEST PASS` | ✅ built in — it *is* the red demonstration |
 | `land-round.sh` refuses off main | ✅ landed the bootstrap from `main` → `LANDED: origin/main 711aaba` | ✅ run from `bootstrap-p1` → `REFUSED: on 'bootstrap-p1', not main.`, rc=64 |
+| `land-round.sh` refuses on a failing gate | ✅ `LANDED: origin/main 8d58e97 contains adopt-gate-rc-capture` | ✅ throwaway branch carrying a phantom arm → `REFUSED: check-plan-arms failed (rc=1); not pushing.`, rc=70, **`origin/main` verified unchanged at 8d58e97** |
 
 ⭐ **The arms gate went red once on CORRECT state before any of that**, and it is the failure worth
 recording: this very file described the marker syntax in prose, the gate greps `docs/` for that
@@ -81,7 +82,16 @@ syntax, and so the documentation *became* a phantom arm named `exact test name s
 ⚠️ **A gate that fires on correct state is worse than no gate** — fixed by never spelling a marker
 outside a plan (§1).
 
-### 2.1 ⛔ `pipefail` is the only thing making the landing script's gates real — MEASURED
+### 2.1 ⛔ `pipefail` WAS the only thing making the landing script's gates real — MEASURED, then fixed
+
+⚠️ **Superseded as of `8d58e97`, and kept because the measurement is the reason the fix exists.**
+`bin/land-round.sh` no longer pipes gates into `tail`: a `gate()` function captures each gate's exit
+status (`out=$("$@" 2>&1) || rc=$?`) and refuses the push with `exit 70`. ⭐ **`|| rc=$?` on the
+assignment line is load-bearing** — under `set -e` a failing *assignment* exits before a following
+`rc=$?` ever runs, which fails **silently**: no verdict, no refusal, nothing pushed and nothing said.
+*(Found by `commonplace-doc` while demonstrating their fix; adopted here verbatim.)*
+
+The original measurement, on the old form:
 
 `bin/land-round.sh` invokes its gates as `… | tail -1`. A pipeline's exit status is the LAST
 command's, so without `pipefail` a failing gate prints `FAIL` and the script pushes anyway. It sets
@@ -96,6 +106,22 @@ reading** (spec mutated via `bin/mutate.sh`, `REACHED_PUSH` stands in for the `g
 
 ⭐ **All three cells were run.** The middle row is what a `pipefail`-less copy of this script does
 today, in any repo that has one.
+
+### 2.1a ⚠️ A REFUSED landing leaves the rejected merge in LOCAL main
+
+Measured 2026-08-25 on the red arm above: `land-round.sh` merges **before** it runs the gates, so a
+refusal exits with `origin/main` untouched (✅ the property that matters) and **local `main` sitting
+on the rejected merge** — `a21532d`, while `origin/main` stayed `8d58e97`.
+
+⛔ **"Nothing was pushed" and "nothing happened" are different states, and only one of them is
+visible in the refusal message.** A naive re-run pushes the merge the gates just rejected. This
+repo's copy therefore prints the way back:
+
+```
+REFUSED: local main still holds the rejected merge. Undo with: git reset --hard <pre-merge sha>
+```
+
+⭐ **That line is an addition to `commonplace-doc`'s 2dd5234 script, not part of it.** Reported back.
 
 ### 2.2 ⚠️ `check-spec-pristine.sh` was on NO path to `main` until 2026-08-25
 
