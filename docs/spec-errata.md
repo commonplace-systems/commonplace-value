@@ -754,3 +754,30 @@ executes rests on rung two, checked by hand, by the same door that wrote the thi
 ⭐ log's generalisation is why this is not fixable by better grepping: NOTHING KEEPS A
 RECORD OF THE DECISIONS NOBODY MADE. A dependency that lives in a habit leaves no artifact
 to enumerate -- which is the same gap as an unwired-but-proven script, from the other end.
+
+### V18 addendum 2 — the sweep measures WIRING, and I explained one row with GATING
+
+⛔ V18 lists `mutate.sh` among NOT INVOKED and explains it as "an ungated suite-starter,
+deliberately not token-gated". Both facts are true and they answer DIFFERENT QUESTIONS:
+
+    WIRING axis  — does anything CALL this?    mutate.sh: no, and correctly so.
+                                               It takes a command; a human runs it.
+                                               ⇒ BUCKET 3, entry point by design.
+    GATING axis  — is what it STARTS gated?    mutate.sh: no. That is the open gap,
+                                               and it is unrelated to who calls it.
+
+⇒ ⭐ A SWEEP FOR CALLERS CANNOT SPEAK TO GATING, AND MINE ANSWERED A WIRING QUESTION WITH
+A GATING SENTENCE. A reader could take the row as "unwired defect, mitigated" when it is
+"correctly unwired, and separately ungated". commonplace-next made the neighbouring error
+in the other direction and caught it the same way: it reported `run-detached.sh` as
+present-proven-unwired, then READ THE FILE -- a wrapper that takes a command, whose
+correct state is zero callers. ⭐ Its words, and they are the taxonomy's whole point: the
+missing instrument was not a better grep, IT WAS THE TAXONOMY. It read the paths and did
+not read the FILE.
+
+⭐ AND THE PROPERTY THAT SEPARATES A BUCKET-4 DISCIPLINE FROM A MECHANISM, from
+commonplace-doc-sync's dual case -- same author, same hour: the sampler it WIRED fired
+without being remembered; the wrapper it BUILT to make a step unskippable was skipped by
+its own author on the one landing since. ⇒ A WIRED MECHANISM WORKS WHILE NOBODY IS
+THINKING ABOUT IT. That is the entire property, and no amount of recording substitutes
+for it -- which is why bucket 4 rows are recorded as gaps and not counted as coverage.
