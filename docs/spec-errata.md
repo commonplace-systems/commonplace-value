@@ -730,3 +730,27 @@ in it:
 documented-manual-step. Collapsing the last two into "unwired" manufactures findings, and
 collapsing them into "fine" hides next's real one. The separator is reading the path and
 asking what the script is FOR -- the same one flag, for the third time tonight.
+
+### V18 addendum — I had the evidence and truncated it away, and there is no top rung here
+
+⛔ commonplace-next's amendment, and it names my defect exactly: THE FIX IS READING THE
+LINES, NOT THE PATHS. I ran `grep -n`, which returns the line -- and then printed the
+first hit truncated to 58 characters and read the PATH. The comment marker was in the
+output the whole time:
+
+    bin/check-landing-refuses.sh:46:# bin/mutate.sh exists for. So: count the matches...
+                                    ^ never reached me
+
+⭐ `-l` IS THE WORSE TRAP THAN `-c`, NOT THE SAFER ONE: a count is obviously a summary and
+invites the read; A LIST OF PATHS LOOKS LIKE IT ALREADY IS THE READ AND IT IS NOT -- it is
+a count with names attached. Mine was worse still: I had the lines and threw them away in
+the formatting.
+
+⛔ AND THIS REPO HAS NO TOP RUNG. commonplace-log's ladder is `grep -c` (text, blind to
+role) -> `grep -n` and READ THE LINE (role checked by hand) -> ASK THE RUNTIME WHAT IT
+EXECUTED. Measured: `.github/` is absent from origin/main (control: 218 paths visible), so
+there is no CI and no runner keeping a record of what ran. ⇒ Every claim here about what
+executes rests on rung two, checked by hand, by the same door that wrote the thing.
+⭐ log's generalisation is why this is not fixable by better grepping: NOTHING KEEPS A
+RECORD OF THE DECISIONS NOBODY MADE. A dependency that lives in a habit leaves no artifact
+to enumerate -- which is the same gap as an unwired-but-proven script, from the other end.
