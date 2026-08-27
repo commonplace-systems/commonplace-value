@@ -18,6 +18,14 @@
 # three lines "survived" and read as an ornamental gate. That is why this script
 # refuses when the bytes did not change — a malformed mutation and an ornamental
 # gate share the observable "I changed it and nothing happened".
+# ⛔ `-e` IS DELIBERATELY ABSENT AND THAT IS LOAD-BEARING, NOT AN OVERSIGHT.
+# This script reports on a corpus, so it MUST survive commands that legitimately
+# return non-zero: `grep -c` on no match, a false `[ ]` in a `&&` chain, a diff that
+# finds a difference. Under `set -e` several of those abort MID-REPORT, and the abort
+# looks exactly like a clean early finish.
+# ⚠️ commonplace-biscuit's rule: WHEN YOU CHECK AND COME BACK CLEAN, CHECK WHETHER YOUR
+# CLEANLINESS IS LOAD-BEARING OR INCIDENTAL. Mine is load-bearing, and `set -e` is the
+# single most natural hardening someone would later apply -- it would arm silently.
 set -uo pipefail
 # ⛔⛔ FACE (3) OF THE MUTATION TRAP, and until 2026-08-27 nobody was checking it.
 # The three faces: (1) the mutation never applied · (2) it applied but the red came

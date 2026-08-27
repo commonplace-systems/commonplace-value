@@ -28,6 +28,14 @@
 # reads source and starts no BEAM.
 #
 # Exit: 0 all floors met · 1 a tunable is below its floor · 2 instrument blind.
+# ⛔ `-e` IS DELIBERATELY ABSENT AND THAT IS LOAD-BEARING, NOT AN OVERSIGHT.
+# This script reports on a corpus, so it MUST survive commands that legitimately
+# return non-zero: `grep -c` on no match, a false `[ ]` in a `&&` chain, a diff that
+# finds a difference. Under `set -e` several of those abort MID-REPORT, and the abort
+# looks exactly like a clean early finish.
+# ⚠️ commonplace-biscuit's rule: WHEN YOU CHECK AND COME BACK CLEAN, CHECK WHETHER YOUR
+# CLEANLINESS IS LOAD-BEARING OR INCIDENTAL. Mine is load-bearing, and `set -e` is the
+# single most natural hardening someone would later apply -- it would arm silently.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 

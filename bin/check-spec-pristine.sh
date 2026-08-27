@@ -9,6 +9,14 @@
 # Exit: 0 = all pristine · 1 = a spec changed · 2 = instrument blind (a declared
 # file is missing, or the table below is empty). Both arms demonstrated in
 # docs/IMPLEMENTATION-PLAN-P1.md.
+# ⛔ `-e` IS DELIBERATELY ABSENT AND THAT IS LOAD-BEARING, NOT AN OVERSIGHT.
+# This script reports on a corpus, so it MUST survive commands that legitimately
+# return non-zero: `grep -c` on no match, a false `[ ]` in a `&&` chain, a diff that
+# finds a difference. Under `set -e` several of those abort MID-REPORT, and the abort
+# looks exactly like a clean early finish.
+# ⚠️ commonplace-biscuit's rule: WHEN YOU CHECK AND COME BACK CLEAN, CHECK WHETHER YOUR
+# CLEANLINESS IS LOAD-BEARING OR INCIDENTAL. Mine is load-bearing, and `set -e` is the
+# single most natural hardening someone would later apply -- it would arm silently.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 # path <TAB> declared sha256 (full)
