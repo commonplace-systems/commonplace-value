@@ -90,8 +90,22 @@ fi
 echo "  available MB : $available   (danger < $DANGER_AVAILABLE_MB)"
 if [ -n "$serve_pid" ]; then
   echo "  serve rss MB : $serve_rss   (pid $serve_pid, by comm+cwd -- never by pattern)"
-  echo "  serve VmHWM  : ${serve_hwm}MB   (kernel high-water mark -- only moves up)"
-  echo "  PESSIMISTIC  : $pessimistic   <- headroom if the serve faults back to ${peak}MB"
+  # ⛔⛔ VmHWM IS MONOTONIC AND THAT MAKES IT A RATCHET -- commonplace, correcting
+  # biscuit's fix which I adopted twenty minutes ago. It only ever moves UP and
+  # nothing resets it short of a process restart. This serve has been up 3d 21h, so
+  # 2855 may be a peak from days ago, and if it ever touches 5 GB for one minute the
+  # fleet reserves 5 GB PERMANENTLY -- including on every future quiet night.
+  # ⇒ THAT IS `swap free > 1000 MB` ARRIVING BY ANOTHER ROUTE: a criterion whose
+  # green arm gets harder to reach over time, which nobody notices is drifting
+  # because each individual reading is defensible.
+  # ✅ Fix is not a redesign, it is PRINTING ALL THREE so the ratchet is READABLE.
+  # A reserve that has quietly grown from 2.5 GB to 4 GB shows up in the output
+  # instead of being an invisible drift. Same shape as the two-constants rule: a
+  # single number has nothing to disagree with.
+  echo "  serve VmHWM  : ${serve_hwm}MB   <- the most it has EVER held SINCE IT STARTED,"
+  echo "                          not the most it holds. Monotonic; diverges further each day it stays up."
+  echo "  RESERVE      : $((peak - serve_rss))MB   <- VmHWM minus current rss. WATCH THIS NUMBER GROW."
+  echo "  PESSIMISTIC  : $pessimistic   = available - reserve"
 else
   echo "  serve rss MB : NOT FOUND -- pessimistic figure unavailable, treating available as-is"
 fi

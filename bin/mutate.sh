@@ -19,6 +19,21 @@
 # refuses when the bytes did not change — a malformed mutation and an ornamental
 # gate share the observable "I changed it and nothing happened".
 set -uo pipefail
+# ⛔⛔ FACE (3) OF THE MUTATION TRAP, and until 2026-08-27 nobody was checking it.
+# The three faces: (1) the mutation never applied · (2) it applied but the red came
+# from a broken harness · (3) IT APPLIED AND MOVED THE EXPECTATION WITH IT.
+# This file already refused (1). commonplace-markdown hit (3): its sed was a BLANKET
+# replace that changed the implementation line AND THE SELF-TEST'S EXPECTED STRING,
+# so the check moved with the thing it checks and the demonstration printed PASS.
+# ⭐ A MUTATION THAT ALSO MUTATES THE EXPECTATION IS A FUNCTION ASSERTED EQUAL TO
+# ITSELF -- this repo's own round-trip rule, met from the mutation side.
+#
+# ⇒ The tractable guard: DECLARE HOW MANY LINES YOU MEANT TO CHANGE. A scoped
+# mutation changes one; a blanket replace changes several and must say so out loud.
+# `--lines N` (default 1). diff reports a `-` and a `+` per changed line, so the
+# comparison is against 2N.
+expect_lines=1
+if [ "${1:-}" = "--lines" ]; then expect_lines="${2:?--lines needs a count}"; shift 2; fi
 file="${1:?file}"; expr="${2:?sed expression}"; shift 2
 [ "${1:-}" = "--" ] && shift
 [ -f "$file" ] || { echo "FAIL: no such file $file" >&2; exit 2; }
@@ -29,7 +44,16 @@ if cmp -s "$keep" "$file"; then
   echo "FAIL: mutation did not change $file -- inert mutation, proves nothing." >&2
   exit 3
 fi
-echo "MUTATED $file ($(diff "$keep" "$file" | grep -c '^[<>]') changed lines); running: $*"
+changed=$(diff "$keep" "$file" | grep -c '^[<>]')
+if [ "$changed" -ne "$((expect_lines * 2))" ]; then
+  echo "FAIL: mutation changed $((changed / 2)) line(s); --lines says $expect_lines." >&2
+  echo "      A blanket replace can change the ASSERTION as well as the target, and then" >&2
+  echo "      the check moves with the thing it checks and the demonstration prints PASS." >&2
+  echo "      Scope the sed to the asserted line, or pass --lines $((changed / 2)) deliberately." >&2
+  diff "$keep" "$file" | sed 's/^/      | /' >&2
+  exit 4
+fi
+echo "MUTATED $file ($((changed / 2)) line(s), as declared); running: $*"
 "$@"; rc=$?
 echo "MUTATION RESULT rc=$rc (restored $file)"
 exit $rc
