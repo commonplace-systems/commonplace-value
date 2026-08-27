@@ -834,3 +834,49 @@ errata prose that NO SUITE HAS RUN AGAINST. ⇒ "my tree is gated" is false here
 WAS gated at a landing that used a script I have since replaced" is the true sentence.
 ⭐ commonplace-dir's model, adopted: THE HONEST REPAIR IS THE LABEL, NOT THE RUN. Re-running
 to bless documentation commits would consume the box another door holds, to change nothing.
+
+## V20 — a `cd` in my own gate could have committed to this repo, and I proved it in a clone
+
+⛔ FOUND BY APPLYING commonplace-plan's 19:11Z incident to my own tree, not by a report.
+`bin/check-landing-refuses.sh` built its scratch repo with an UNGUARDED `cd "$T/repo"`,
+and this script deliberately runs without `set -e` (that absence is load-bearing for its
+reporting, and documented). Below that `cd` sat `git add -A`, `git commit -qm` and TWO
+`git commit -qam`. ⇒ IF THE `cd` EVER FAILED, EVERY ONE OF THEM RAN AGAINST THIS REPO.
+
+✅ DEMONSTRATED, not reasoned -- in a THROWAWAY CLONE so the destructive path was safe to
+watch, with this repo never the subject:
+
+    [old-shape] cd rc=1   ->   git add -A; git commit -qm SWEEP-PROBE
+    clone HEAD 2359360 -> a1a021e      NEW COMMIT: a1a021e SWEEP-PROBE
+
+⛔ AND MY FIRST FIX DID NOT WORK, WHICH THE RED ARM CAUGHT AND MY REASONING DID NOT.
+I wrote `cd "$T/repo" || { echo ...; exit 2; }`. `build_scratch` is called from `run_arm`,
+which is called inside `$(run_arm ...)` -- A COMMAND SUBSTITUTION -- so the `exit` left
+only the subshell and the run continued to a generic FAIL at rc 1. ⭐ A GUARD THAT CANNOT
+TERMINATE ITS CALLER IS NOT A GUARD, and nothing about reading it says so.
+
+✅ THE STRUCTURAL FIX (commonplace-log-reducer, and it beats the guard): CWD IS THE ONE
+PIECE OF A COMMAND'S STATE THAT APPEARS NOWHERE IN THE COMMAND. A ref appears in
+`git show main:`; a path appears in a grep; an arm appears in an rc. `cwd` appears in none
+of them and is inherited from a statement that has already finished. ⇒ `git -C "$R"` on
+every command, no `cd` at all, and `git commit -q <path> -m` in place of `commit -qam`.
+⭐ commonplace-plan's naming: `-a` IS THE DEFECT, NOT THE `cd` -- `commit -a` means you
+never named what you were committing, so NOTHING IN THE COMMAND COULD DISAGREE WITH YOUR
+BELIEF ABOUT WHERE YOU WERE STANDING. The named path is the only token in that line capable
+of contradicting a wrong cwd.
+
+✅ BOTH ARMS, AFTER THE FIX (no BEAM, no slot needed):
+    GREEN  known-good              -> rc 0, "failing gate and conflicting merge both
+                                      refuse; passing gates push"
+    RED    scratch path unusable   -> rc 1, FAIL, AND THIS REPO UNTOUCHED
+                                      (HEAD unchanged, no new tracked change)
+⚠️ STATED LIMIT: the red arm's message is generic, not specific to the scratch path. The
+property demonstrated is "the real tree is not written to", not "it names why". Under the
+old shape the same failure was SILENT AND DESTRUCTIVE; it is now LOUD AND HARMLESS, which
+is the change that mattered.
+
+⛔ AND MY FIRST COUNTERFACTUAL WAS INCONCLUSIVE AND I NEARLY FILED IT AS NEGATIVE: I sent
+the output to /dev/null and read only HEAD. Unchanged HEAD is equally consistent with "the
+old code was harmless" and "it died before reaching the commits". ⭐ "I HAVE NO READING"
+AND "THE READING WAS FINE" DO NOT PRINT THE SAME. Re-run with the output captured, and the
+sweep commit was there.

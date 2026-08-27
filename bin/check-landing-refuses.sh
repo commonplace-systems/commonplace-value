@@ -54,26 +54,44 @@ n_gates=$(grep -c '^gate ' "$SCRIPT")
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 
 build_scratch() {  # build_scratch <gate-command>
-  rm -rf "$T/repo" "$T/origin.git"
+  # ⛔ NO `cd`. commonplace-log-reducer, 2026-08-27, and it is the structural fix rather
+  # than a guard: CWD IS THE ONE PIECE OF A COMMAND'S STATE THAT APPEARS NOWHERE IN THE
+  # COMMAND. A ref appears in `git show main:`; a path appears in a grep; an arm appears
+  # in an rc. `cwd` appears in none of them, and it is inherited from a statement that has
+  # already finished.
+  # ⚠️ WHAT THIS PREVENTS, CONCRETELY: below are `git add -A`, `git commit` and two
+  # `git commit -qam`. Under the old `cd "$T/repo"` -- unguarded, in a script where `-e`
+  # is deliberately absent -- a failed `cd` ran every one of them against THIS repository.
+  # commonplace-plan hit exactly that at 19:11Z in another tree: a `cd` that had outlived
+  # its statement, and `-a` meaning nothing in the command could disagree with its belief
+  # about where it was standing.
+  # ⛔ A GUARD WAS NOT ENOUGH AND I TRIED IT FIRST: `cd ... || exit 2` sits inside
+  # `$(run_arm ...)`, a command substitution, so the `exit` left only the subshell and the
+  # run continued to a generic FAIL at rc 1. The red arm is what found that -- the fix I
+  # had just written did not work, and reasoning about it said it did.
+  local R="$T/repo"
+  rm -rf "$R" "$T/origin.git"
   git init -q --bare "$T/origin.git"
-  git init -q -b main "$T/repo"
-  cd "$T/repo"
-  git config user.email t@t; git config user.name t
-  mkdir -p bin
+  git init -q -b main "$R"
+  git -C "$R" config user.email t@t; git -C "$R" config user.name t
+  mkdir -p "$R/bin"
   # Substitute EVERY gate line with the controllable probe, and drop the
   # mix-specific line that has no meaning in a scratch repo.
-  sed -e "s|^gate .*|gate \"probe\" $1|" -e '/^mix deps.get/d' "$OLDPWD/$SCRIPT" > bin/land-round.sh
-  echo seed > seed.txt; echo shared > shared.txt; git add -A; git commit -qm seed
-  git remote add origin "$T/origin.git"; git push -q -u origin main
-  git checkout -q -b feature; echo work > work.txt; git add -A; git commit -qm work
-  git checkout -q main
+  sed -e "s|^gate .*|gate \"probe\" $1|" -e '/^mix deps.get/d' "$SCRIPT" > "$R/bin/land-round.sh"
+  echo seed > "$R/seed.txt"; echo shared > "$R/shared.txt"
+  git -C "$R" add -A; git -C "$R" commit -qm seed
+  git -C "$R" remote add origin "$T/origin.git"; git -C "$R" push -q -u origin main
+  git -C "$R" checkout -q -b feature; echo work > "$R/work.txt"
+  git -C "$R" add -A; git -C "$R" commit -qm work
+  git -C "$R" checkout -q main
   if [ "${2:-}" = "conflict" ]; then
     # Both sides rewrite the same line -> the merge cannot succeed.
-    git checkout -q feature; echo from-feature > shared.txt; git commit -qam feature-side
-    git checkout -q main;    echo from-main    > shared.txt; git commit -qam main-side
-    git push -q origin main
+    git -C "$R" checkout -q feature; echo from-feature > "$R/shared.txt"
+    git -C "$R" commit -q shared.txt -m feature-side
+    git -C "$R" checkout -q main;    echo from-main    > "$R/shared.txt"
+    git -C "$R" commit -q shared.txt -m main-side
+    git -C "$R" push -q origin main
   fi
-  cd - >/dev/null
 }
 
 run_arm() {  # run_arm <gate-command> <label> [conflict]; echoes "<rc> <before> <after>"
