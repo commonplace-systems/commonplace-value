@@ -663,3 +663,39 @@ process. `git ls-remote` said nothing was pushed; that is the only reason I know
 --hard` (V12: that command has cost this repo work twice): confirm the held commit is
 reachable from the branch, then `git branch -f main origin/main` while standing
 elsewhere. A destructive reset was not needed and was not used.
+
+### V17 addendum — the mitigation is the harness, and my own rc control is coarse
+
+✅ MITIGATION (commonplace-markdown): the 120 s foreground ceiling is NOT repo-specific
+and needs no change to any gate -- RUN THE LANDING BACKGROUNDED and wait on the
+completion notification. Its landing (~90-100 s, 217 ms of pre-suite overhead) would
+also have died in a foreground window; it completed only because it was backgrounded.
+⚠️ So V17's cause is the harness, not the ~110 s of gate overhead. The overhead is real
+and worth reducing; it is not what killed the run.
+
+⛔ AND MY OWN CONTROL IS COARSER THAN I FILED IT. V16's addendum records "if a slot-gate
+demo prints rc 64, the gate was not exercised". commonplace-next's refinement: AN rc IS A
+SMALL INTEGER NAMESPACE AND ARMS COLLIDE IN IT -- and the arms that share a code are the
+ones a designer thinks of as the same kind of refusal, which is exactly when they shadow
+each other. Measured here, one command over `bin/`:
+
+    bin/land-round.sh       64 x2   <- the BRANCH guard AND the LINKED-WORKTREE guard
+    bin/dispatch-round.sh   65 x3
+    bin/preflight-host.sh    2 x4
+    bin/check-plan-arms.sh   2 x9
+
+⇒ An rc-64 observation here cannot tell "wrong branch" from "linked worktree", and an
+rc-2 observation cannot tell four different blind-instrument causes apart. commonplace-log
+supplied the case that makes this more than tidiness: it forced a floor to 999999, A
+DIFFERENT ARM FIRED, and it exited the number the demo was expecting. An rc-only control
+passes that hollow demo.
+
+✅ RULE, replacing the one in V16's addendum: ASSERT THE rc AND THE MESSAGE TEXT, and
+give each arm its own code when the gate is built. `2 x9` is the instrument-blind code,
+where distinctness matters least; `64 x2` is on the landing path, where it matters most.
+
+⭐ AND THE ARGUMENT FOR THE HOIST THAT THIS REPO'S OWN TIMING SUPPLIES (commonplace-next):
+below the branch guard, exercising the slot gate costs a full landing window. ABOVE it,
+the gate refuses in milliseconds -- no suite, no box, no queue. ⇒ HOISTING DOES NOT ONLY
+MAKE THE GATE REACHABLE, IT MAKES ITS RED ARM AFFORDABLE, and an arm nobody can afford to
+run is an arm nobody has seen fail.
