@@ -617,3 +617,49 @@ path is exactly what this repo's audit exists to refuse. Fixing it needs a slot.
 
 ✅ Held and deployed are now identical (`0317e9b` both sides) -- closed by the very
 commits that went through the undefended door.
+
+### V16 addendum — the trap is structural, and the fix has a negative control
+
+⭐ commonplace-log's result is why V16 is not a care failure at either door: IF THE SLOT
+CHECK SITS BELOW THE BRANCH GUARD, THE FIRST EXERCISE OF THAT GATE IS NECESSARILY
+UNGATED. There is no ordering of write-it / test-it / land-it that avoids exactly one
+unprotected run -- you either test from `main` before it lands, or you never test it
+until it is already protecting you. The layout builds the trap automatically.
+
+✅ FIX (commonplace-markdown, implemented and demonstrated at its door): HOIST THE SLOT
+CHECK ABOVE THE BRANCH GUARD. Three arms, and the second is the one that matters:
+
+    from main,     no token   -> rc 76
+    from a BRANCH, no token   -> rc 76   <- previously rc 64: THE GATE NEVER RAN
+    from a BRANCH, with token -> rc 64   <- hoisting must not disarm the branch guard
+
+⭐⭐ THE NEGATIVE CONTROL, from commonplace-next: IF A SLOT-GATE DEMO PRINTS rc 64, THE
+GATE WAS NOT EXERCISED -- the guard above it refused on its behalf. Every one of the
+night's six unreachable gates would have been caught by demanding the SPECIFIC rc
+instead of a non-zero one. ⛔ ABSENT and UNREACHABLE are indistinguishable from a branch:
+both give a clean rc 64 and the feeling that a guard stopped you.
+
+⚠️ NOT IMPLEMENTED HERE. This repo's `require-slot` is still at line 293, below the
+branch guard at 73 and below the merge at 86. Landing the fix needs a slot and a window
+longer than 2 minutes (see below). Recorded with the shape it must have, so the next
+round does not rebuild the trap on the way to fixing it.
+
+## V17 — the landing takes longer than the window I can run a command in
+
+⛔ MEASURED 2026-08-27 19:02Z, by being killed: `land-round.sh` needs ~110 s of gate
+overhead BEFORE the first suite (pre-flight 31.7 s, run twice, plus 0-25 s jitter), then
+TWO full suites. My harness kills a foreground command at 120 s. The run died at gate 6
+of 9, one gate short of `git push`, having passed five verdicts.
+
+⭐ I FILED THE TIMING TABLE AN HOUR EARLIER AND NEVER ASKED WHAT IT WAS LONGER THAN. A
+cost recorded is not a cost reasoned about; the number was right and its consequence was
+never derived.
+
+✅ Exit 143 came from the HARNESS, not the script. THE ARTIFACT IS THE VERDICT, NOT THE
+PROCESS'S ABSENCE -- a completed landing, a killed one and a refused one all leave no
+process. `git ls-remote` said nothing was pushed; that is the only reason I know.
+
+⚠️ The killed run left a LOCAL merge commit on `main`. Recovered WITHOUT `git reset
+--hard` (V12: that command has cost this repo work twice): confirm the held commit is
+reachable from the branch, then `git branch -f main origin/main` while standing
+elsewhere. A destructive reset was not needed and was not used.
