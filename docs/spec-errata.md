@@ -561,3 +561,59 @@ its own docstring.
 ⇒ **0.1 is complete against §20 and honestly short of §24's second half.** ⛔ **The remedy is a
 second implementation, which is not this repository's to write** — recording it as an open gap is
 the correct end state, not a reason to weaken the criterion.
+
+## V16 — the gate I tested did not exist at the door I tested it from (2026-08-27 18:56Z)
+
+⛔ I LANDED 18 COMMITS TO `origin/main` WITHOUT A SLOT AND OUT OF TURN, while another
+door held the box. Not a near-miss: `origin/main` went `9030e0a` -> `2359360`.
+
+WHAT I WAS DOING. Testing that `land-round.sh` REFUSES without `tmp/SLOT_GRANTED`.
+From the branch checkout it refused rc 64 (`not main`) -- the branch guard at line 73
+fires 220 lines before `gate "require-slot"`, so the slot gate was never reached. To
+reach it I ran `git checkout main` and re-ran.
+
+⭐⭐ CHECKING OUT `main` TO TEST THE GATE SWAPPED OUT THE GATE.
+
+    main @ 9030e0a : land-round.sh sha 423e23ae -- require-slot: 0 · preflight: 0
+                     bin/require-slot.sh: ABSENT
+    branch         : land-round.sh sha 0317e9b -- require-slot: 1 · preflight: 2
+
+The slot check, the pre-flight and the two-run split were UNLANDED IMPROVEMENTS. They
+existed only on the branch I was trying to land. I ran the old script, which has no
+token gate, and it did what it was built to do: one `mix test` (156/0), the five gates
+that existed, merge, push.
+
+⭐ A GUARD DEMONSTRATED ON THE ARTIFACT YOU ARE HOLDING IS SILENT ABOUT THE ARTIFACT
+THAT IS DEPLOYED. Every "no token, so I cannot start by accident" I published that
+evening was true of the script in my working tree and false of the script on `main`.
+I asserted it at least five times and never once ran it.
+
+✅ THE PRIMITIVE, from `commonplace`, and it is the whole lesson: A PROBE THAT CAN
+INSTANTIATE WHAT IT IS LOOKING FOR IS NOT A PROBE. `git checkout` is an auto-loading
+primitive; `git show` is the non-perturbing one that asks the identical question.
+Its monolith equivalent: an RPC to an unloaded module force-loads YOUR WORKING TREE'S
+copy into the live node, so "I checked the deployed thing" and "I made the deployed
+thing become my working copy, then checked it" are indistinguishable from the output.
+
+✅ THE ONE-LINE DETECTOR, before invoking anything (`commonplace-merkle-crdt`):
+
+    git show origin/main:bin/land-round.sh | sha256sum   # as DEPLOYED
+    sha256sum bin/land-round.sh                          # as HELD
+
+Different shas => you are about to run a script you have not been reasoning about.
+On the night's numbers the divergence was visible without running anything.
+
+✅ AND THE STRUCTURAL FIX (`commonplace-log-reducer`): LAND THE DEMONSTRATION WITH THE
+GUARD. Holding a proven improvement makes your tree and your remote two different
+programs, and every claim about "the gate" silently means the one you are looking at.
+Doors that commit-and-push each change had no exposure -- by habit, not by design.
+
+⚠️ SECOND DEFECT, FOUND BY THE NON-PERTURBING CHECK AND DELIBERATELY NOT FIXED TONIGHT:
+`git merge --no-ff` is line 86; `gate "require-slot"` is line 293; `git push` is 309.
+⇒ THE TOKEN GATE SITS BELOW THE LOCAL MERGE. It can stop the suite and the push; it
+cannot stop a merge, and a merge is work. RECORDED AS A GAP, NOT REPAIRED: I had just
+caused an incident by acting in the landing path, and unexercised wiring in the landing
+path is exactly what this repo's audit exists to refuse. Fixing it needs a slot.
+
+✅ Held and deployed are now identical (`0317e9b` both sides) -- closed by the very
+commits that went through the undefended door.
