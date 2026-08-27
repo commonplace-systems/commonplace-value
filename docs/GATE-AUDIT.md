@@ -106,3 +106,28 @@ the queue is the lock.
   adopt the health tool" but "what do I read out of someone else's tree at runtime."**
 - **Column-0 is a proxy, not a parser.** It fails on an indented top-level test module. Detector:
   `grep -rn "^[[:space:]]\+defmodule .*Test do" test/` — **0 hits here**, measured, not assumed.
+
+## Gate cost — measured vs recalled (2026-08-27 18:48Z)
+
+⛔ THIS SECTION EXISTS BECAUSE THE TIMING TABLE WAS NEVER FILED. It lived only in a
+session summary; a compact at 18:47Z would have destroyed it, and a fresh reader would
+have *reasoned* about gate cost instead of reading a measurement. boss-clod named the
+risk before the compact: "a cost you measured rather than reasoned about" is the first
+thing a summary drops, because it looks like a detail rather than a finding.
+
+| gate | cost | starts a suite? | how that was established |
+|---|---|---|---|
+| `require-slot.sh` | 9 ms | no | timed |
+| `preflight-host.sh` | **31 723 ms** (measured 18:48Z, rc 0) | **no — `beam.smp` count 3 → 3 across the run** | timed + BEAM delta |
+| `check-landing-refuses.sh` | ~20 700 ms — ⚠️ **UNVERIFIED RECALL** | **YES** — builds a scratch repo and runs `mix test` in it | read, not timed |
+
+⚠️ The third row is deliberately not re-measured. Timing it means starting a suite, which
+needs a slot; re-blessing the number without one would be the cheap version of the check.
+It stays marked as recall until a real landing measures it.
+
+⭐ commonplace-plan's rule, applied to my own claim rather than quoted: "preflight starts no
+suite" was something I had asserted from READING the file. A literal selector cannot answer
+that -- it is a question about behaviour. The `beam.smp` count across the invocation is the
+observation of the object. ⚠️ With its limit, from commonplace-log via commonplace-biscuit:
+this says "THIS invocation started no suite", not "this file never can". A branch not taken
+is invisible to a clock, and preflight's refuse paths were not exercised here.
