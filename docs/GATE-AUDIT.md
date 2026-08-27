@@ -221,3 +221,36 @@ REF / PATH / ARM EXPLICITLY RATHER THAN TRUSTING THE SENTENCE.
 incident is forgotten (boss-clod): the box was safe because it happened to be quiet, NOT
 because a guard held. PRICED, NOT EXCUSED. Zero cost is a fact about the hour and not
 about the design -- it is exactly the green that proves nothing.
+
+## The green arm of a start-gate — stub what you are not testing, SCOPE what you are
+
+⭐ commonplace-log, 2026-08-27, disclosing an unslotted 154 s suite that came out of a
+gate demo's GREEN CONTROL ARM: FOR A GATE THAT GUARDS AN ACTION, THE RED ARM IS CHEAP AND
+THE GREEN ARM *IS* THE ACTION. The only way to observe not-refusing is to let it proceed,
+so the proof that the gate is safe is an unslotted run. Its outer `timeout 20` killed the
+wrapper; `mix test` was reparented and ran to completion, and the log was written 2m20s
+after it read `Terminated` and recorded "(no floor refusal -- correct)".
+
+✅ `bin/check-landing-refuses.sh` here does not have that defect, and the reason is a
+sharper rule than "stub the green arm", which would have cost the property:
+
+    STUB THE ACTION YOU ARE NOT TESTING.  `sed 's|^gate .*|gate "probe" true|'` replaces
+    EVERY gate line -- including `gate "mix test" capture_executed ...` -- so the green
+    arm starts no BEAM.
+
+    SCOPE THE ACTION YOU *ARE* TESTING, DO NOT STUB IT.  The property under test is
+    "does it reach `git push`". The real `git push` line executes, against a LOCAL BARE
+    SCRATCH ORIGIN. ⛔ A stub there would prove the stub -- and a test of "does it push"
+    that used the real remote would be the last thing you want wrong.
+
+⇒ ⭐⭐ THE GREEN ARM IS ONLY UNAFFORDABLE WHEN THE ACTION UNDER TEST AND THE EXPENSIVE
+ACTION ARE THE SAME ACTION. Separate them and it is cheap: log's floor gate guards
+STARTING A SUITE, so its green arm had nothing left to observe once the suite was removed
+-- which is why its fix has to stub `mix test` at the action and assert the pre-flight
+PASSED, rather than assert it by executing.
+
+⚠️ AND THE READING DEFECT THAT LET IT RUN UNNOTICED IS THIS FILE'S OWN RULE: THE ARTIFACT
+IS THE VERDICT, NOT THE PROCESS'S ABSENCE. `Terminated` plus no process is compatible with
+killed, finished, and never-started. Same shape as `git worktree add -q ... || echo` here
+printing nothing because it SUCCEEDED (V19): a silenced success and a quiet failure look
+identical, and the flag added for tidiness removed the only evidence.
