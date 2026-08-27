@@ -49,6 +49,24 @@ PINNED_MAX_RUNS="50 50 75 75 75"
 files=$(find test -name '*.exs' | wc -l)
 [ "$files" -gt 0 ] || { echo "INSTRUMENT BLIND: no test .exs files found" >&2; exit 2; }
 
+# ⛔⛔ A NON-EMPTINESS CONTROL DETECTS A SCANNER THAT READ NOTHING. IT CANNOT
+# DETECT ONE READING THE WRONG POPULATION. commonplace-biscuit, 2026-08-27: its
+# inventory globbed the top level only, a gated module sat in a subdirectory, and it
+# reported rc 0 with "0 gated modules, 10 files scanned" -- the control asked "did I
+# scan anything" and got yes, while "did I scan everything" was no.
+# ⭐ So the corpus is cross-checked against an INDEPENDENT enumerator. git does not
+# share this script glob, so a glob that silently narrows -- top-level-only, a missed
+# directory level, a bad -path prune -- disagrees with git and REFUSES.
+# ⚠️ It compares against TRACKED files, so an untracked new test file is a real
+# difference and is meant to be reported, not tolerated.
+tracked=$(git ls-files 2>/dev/null | grep -c "^test/.*\.exs$" || true)
+if [ "${tracked:-0}" -gt 0 ] && [ "$files" -ne "$tracked" ]; then
+  echo "INSTRUMENT BLIND: my glob sees $files test .exs files; git tracks $tracked." >&2
+  echo "      The two enumerations disagree, so one of them is reading the wrong" >&2
+  echo "      population. Non-emptiness would not have caught this." >&2
+  exit 2
+fi
+
 runs=$(grep -rhoE 'max_runs: *[0-9]+' test/ | grep -oE '[0-9]+' || true)
 n_runs=$(printf '%s\n' "$runs" | grep -c . || true)
 if [ "${n_runs:-0}" -eq 0 ]; then
