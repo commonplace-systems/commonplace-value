@@ -1,6 +1,6 @@
 # commonplace-value
 
-> **Status, measured at `9cda6f7`:** 0.1 complete against spec §20 — 156 tests, 155 named arms, 9 modules,
+> **Status, measured at `92abb7e`:** 0.1 complete against spec §20 — 156 tests, 155 named arms, 9 modules,
 > 63 conformance vectors, zero runtime dependencies — and **short of §24 by two named clauses**
 > (`docs/spec-errata.md` V15). Item-by-item mapping: `docs/ACCEPTANCE-20.md`.
 
