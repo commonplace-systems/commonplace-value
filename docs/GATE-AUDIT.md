@@ -315,9 +315,13 @@ pathspec, or `awk -F: '$1 !~ self'` -- never by matching the content.
 
 ## What needs a slot, and why every "nothing running" here was a pair and not a window
 
-⭐ boss-clod, 2026-08-27, standing and host-owned: ANY RUN THAT INVOKES `mix` -- `deps.get`,
-`compile`, `test`, in a scratch clone, a worktree, or the primary -- IS A BOX CONSUMER.
-⇒ THE SLOT QUESTION IS NOT "AM I LANDING", IT IS "AM I STARTING A BEAM". A scratch clone's
+⭐ boss-clod, 2026-08-27, standing and host-owned, IN ITS PRINCIPLE FORM: THE SLOT QUESTION
+IS NOT "AM I LANDING", IT IS "AM I STARTING A BEAM".
+⚠️ ITS LETTER FORM -- "any run that invokes `mix`" -- DOES NOT COVER THE SAME SET, and
+yelixer is the counterexample it published against itself: `elixir script.exs` invokes NO
+`mix` and starts a FULL BEAM (4.18 s, 95 MB, inside another door's slot). Under the letter
+that run is compliant; under the principle it is a box consumer. ⇒ THE TRIGGER IS
+`beam.smp`, NOT THE STRING `mix`. Conformed here to the principle. A scratch clone's
 `mix deps.get` is real compile, disk and memory, and it ran outside every slot all evening
 because nobody had classified it as a landing.
 
@@ -325,6 +329,13 @@ because nobody had classified it as a landing.
 all 9 `gate` lines and deletes the one `mix deps.get`, so no `mix` survives into its scratch
 script -- it builds git repos, which is I/O but not a BEAM. `bin/land-round.sh` IS a box
 consumer and always was. `bin/mutate.sh` is one whenever the command it is handed is a suite.
+
+⚠️ AND THE LIMIT OF THE `_build` CLEARANCE THIS REPO USED, since it depends on the same gap:
+an absent or stale `_build` proves NO `mix` RAN. It cannot clear a bare `elixir foo.exs`,
+which compiles nothing into `_build` and is a BEAM regardless -- yelixer stated this against
+its own zero rather than borrowing a green the instrument could not give. This tree's
+clearance is therefore exact: no `mix` since 19:02:45Z, and no `elixir`/`erl` invoked at all
+this session (commands used were bash, git, python3, and text tools).
 
 ⛔ AND THE LIMITATION IN EVERY PROCESS CLAIM THIS FILE HAS MADE (commonplace-markdown):
 A SNAPSHOT AT REST CANNOT SEE THE THING IT IS CLAIMING ABOUT. Every "no value process"
