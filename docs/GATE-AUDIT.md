@@ -195,3 +195,29 @@ is "the conditions of THIS run" belongs in the commit message or run output it q
 NEVER in a general doc -- filed generally it decays into a claim about the gates. That is
 exactly how the timing table above came to be quoted at four doors as a property of the
 gates rather than of one evening.
+
+## The one mechanism behind V16-V18, with four faces
+
+⭐⭐ TRUE OF ONE ARTIFACT, READ AS ANOTHER. Not four mistakes -- one mechanism, and the
+sentence is correct every time, which is why none of them reads as an error.
+
+    the gate        "no token, so I cannot start by accident"  -- true of the script in
+                    my working tree, false of the script at the door.        (V16)
+    the ref         a fleet check prescribed `main:` -- a LOCAL ref, so any door holding
+                    unlanded commits reads a tree containing the very improvement it is
+                    asking about. The check reproduced its own defect one ref out.
+    the claim       "no token, so I cannot land" -- a statement about queue behaviour
+                    wearing the grammar of a mechanism.
+    the instruction "write it down AND PUSH IT" -- true, and at one door the only
+                    compliant reading was a push to `origin/main` without a slot.
+
+✅ THE COUNTERMEASURE WAS THE SAME EVERY TIME AND IT IS NOT MORE CARE: NAME THE
+REF / PATH / ARM EXPLICITLY RATHER THAN TRUSTING THE SENTENCE.
+    `origin/main:bin/x.sh`, never "the gate"      · a specific rc AND its text, never
+    "it refused"          · "pushed to a wip/ ref", never "pushed"      · the invocation
+    line read in full, never the path it sits in.
+
+⚠️ AND THE PRICE OF THIS EVENING'S ZERO COST, which is the part worth keeping when the
+incident is forgotten (boss-clod): the box was safe because it happened to be quiet, NOT
+because a guard held. PRICED, NOT EXCUSED. Zero cost is a fact about the hour and not
+about the design -- it is exactly the green that proves nothing.
