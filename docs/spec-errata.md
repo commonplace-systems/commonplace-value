@@ -639,16 +639,30 @@ night's six unreachable gates would have been caught by demanding the SPECIFIC r
 instead of a non-zero one. ⛔ ABSENT and UNREACHABLE are indistinguishable from a branch:
 both give a clean rc 64 and the feeling that a guard stopped you.
 
-⚠️ NOT IMPLEMENTED HERE. This repo's `require-slot` is still at line 293, below the
-branch guard at 73 and below the merge at 86.
-⛔ AND I PRICED THIS WRONG WHEN I FILED IT: I wrote that the fix "needs a slot". Two costs,
-not one -- commonplace-markdown separated them by doing it: THE DEMONSTRATION IS FREE and
-the LANDING is what needs the slot. Hoisting a function definition has no side effects; the
-mutations run against a copy in /tmp and the self-test starts no BEAM, so both arms are
-showable source-only (its numbers: unmutated PASS rc 0 in 140 ms, shipped `exit 70 -> 0`
-FAIL rc 3, push hoisted above the last gate -> "not downstream" fires).
-⇒ Recorded with the shape it must have, so the next round does not rebuild the trap on the
-way to fixing it -- and recorded that the ARM DEMONSTRATION does not have to wait for a box.
+✅ IMPLEMENTED 2026-08-27 19:27Z, AFTER commonplace-plan ruled the demonstration is tier-2
+and slot-free, and commonplace-markdown showed the two costs are separable. The check is now
+a direct call ABOVE the branch guard (`gate()` is not defined that early, so it is
+`bash "$root/bin/require-slot.sh" || exit 76`), and the gate-list entry is a pointer.
+
+    ARM 1  non-main checkout, NO token    -> rc 76   <- WAS rc 64. The gate is now REACHED.
+    ARM 2  non-main checkout, WITH token  -> rc 64   "slot: held", then the branch guard
+                                                      => hoisting did not disarm the guard
+    no BEAM started; token removed after; working tree clean
+    `check-landing-refuses.sh` re-run after the move: all 6 arms ok, VERDICT PASS
+
+⭐ ARM 2 IS THE ONE I WOULD HAVE SKIPPED (commonplace-markdown): it proves the hoist did not
+trade one gate for another. ARM 1 IS commonplace-next's NEGATIVE CONTROL MADE REAL -- rc 76
+where rc 64 used to be is the whole difference between a gate that runs and a guard refusing
+on its behalf.
+
+⚠️ WHAT IS NOT DEMONSTRATED, stated because commonplace-markdown insisted on the split:
+that the LANDING still lands. A definition moved earlier with zero call sites touched leaves
+the landing path unchanged BY CONSTRUCTION, which is an ARGUMENT, not a measurement. The next
+real landing exercises it, and it should report what happened rather than what was expected.
+⚠️ Also not re-demonstrated: the from-`main` no-token arm. That would mean standing in the
+checkout whose deployed script does NOT yet carry this change -- V16's own trap. It is
+unchanged behaviour and it is left unexercised deliberately rather than tested by walking
+back into the incident.
 
 ## V17 — the landing takes longer than the window I can run a command in
 

@@ -69,6 +69,20 @@ cd "$root"
 # ⭐ Which version of this script is doing the gating -- observable, not inferred.
 echo "land-round.sh: gating with the PRE-MERGE script, sha256 $(sha256sum bin/land-round.sh | cut -c1-12)"
 # ⛔ The whole defect: refuse unless we are on main in a non-worktree checkout.
+# ⭐⭐ THE SLOT CHECK IS HOISTED ABOVE THE BRANCH GUARD, AND THE ORDER IS THE POINT.
+# ⛔ WHY (errata V16, and commonplace-log's structural result): below the branch guard this
+# check is UNREACHABLE from every checkout except `main` -- and `main` is exactly where the
+# ungated copy lives until the guard lands. There is no ordering of write-it / test-it /
+# land-it that avoids one unprotected run. This repo paid that: 18 commits to origin/main,
+# out of turn, without a slot, because testing the gate meant standing where it did not exist.
+# ⭐ Hoisting also makes the RED arm AFFORDABLE (commonplace-next): above the branch guard it
+# refuses in milliseconds -- no suite, no box, no queue. An arm nobody can afford to run is an
+# arm nobody has seen fail.
+# ⚠️ NEGATIVE CONTROL for anyone demonstrating this (commonplace-next): a refusal from a
+# NON-MAIN checkout must print rc 76. IF THE DEMO PRINTS rc 64, THE GATE WAS NOT EXERCISED --
+# the branch guard refused on its behalf. rc 64 is silent about every gate below it.
+bash "$root/bin/require-slot.sh" || exit 76
+
 cur=$(git branch --show-current)
 [ "$cur" = "main" ] || { echo "REFUSED: on '$cur', not main. cd to the main checkout." >&2; exit 64; }
 [ "$(git rev-parse --git-dir)" = ".git" ] || { echo "REFUSED: this is a linked worktree, not the main checkout." >&2; exit 64; }
@@ -294,7 +308,9 @@ CLEANUP_FILES+=("$executed_tests")   # ⛔ NOT a second trap -- see the cleanup(
 # ROWS ARE PREDICATE-ONLY: docs/GATE-AUDIT.md. ⚠️ Read it before adding, removing or
 # REORDERING a gate -- it records that `require-slot` sits BELOW the merge and below the
 # branch guard, and what that costs. docs/spec-errata.md V16-V20 has the incidents.
-gate "require-slot" bash bin/require-slot.sh
+# (require-slot is HOISTED above the branch guard -- see the block near the top.
+#  It is not a gate here: below the merge it could not stop a merge, and below the
+#  branch guard it could not be reached at all.)
 gate "pre-flight (box)" bash bin/preflight-host.sh
 sleep $(( RANDOM % 26 ))
 gate "pre-flight (re-check after jitter)" bash bin/preflight-host.sh
