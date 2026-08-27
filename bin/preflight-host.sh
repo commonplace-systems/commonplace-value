@@ -41,9 +41,16 @@ if [ -f "$BOSS_HEALTH" ]; then
   # their tool. The discriminator is whether it EMITTED A VERDICT AT ALL. ⭐ Same rule
   # as everywhere else tonight: UNPARSEABLE MUST NOT LOOK LIKE A RESULT.
   # ⭐ Capture once, read the capture many times -- do not re-invoke for the rc.
+  # ⭐ PUBLISH THE REFERENT. boss-clod publishes the sha of this tool, and warned that
+  # anyone who copied it mid-write holds TORN BYTES that `bash -n` will happily pass --
+  # the wrong-referent class in a new costume: not the wrong file, the right file at
+  # the wrong instant. I invoke it live rather than copying, so a torn read shows up as
+  # "no verdict emitted" below. ⇒ But the box line must say WHICH BYTES ANSWERED, so a
+  # reader can compare against what the owner published instead of assuming.
+  health_sha=$(sha256sum "$BOSS_HEALTH" 2>/dev/null | cut -c1-16)
   health_out=$(bash "$BOSS_HEALTH" 2>&1); health_rc=$?
   if printf '%s\n' "$health_out" | grep -q '^\(BOX\||VERDICT|\)'; then
-    echo "  deferring to the axis owner: $BOSS_HEALTH"
+    echo "  deferring to the axis owner: $BOSS_HEALTH (sha ${health_sha:-unreadable})"
     printf '%s\n' "$health_out"
     exit "$health_rc"
   fi
