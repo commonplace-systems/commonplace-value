@@ -22,7 +22,40 @@
 # Exit: 0 safe to start · 1 do not start (memory) · 2 instrument blind.
 set -uo pipefail
 
-DANGER_AVAILABLE_MB=1500   # boss-clod's OOM axis. Below this, nothing starts.
+# ⭐⭐ DEFER TO THE OWNER OF THE AXIS. boss-clod owns memory and load and has filed
+# boss-clod/box-health.sh. commonplace-log-reducer made the coordination point:
+# "a filed artifact fires" argues for filing it SOMEWHERE, and the right somewhere is
+# whoever owns the shared runner -- not five repos each with a private copy that
+# drifts. We spent this evening proving what five cp'd copies of one script do.
+# ⛔ AND MY OWN COPY HAD ALREADY DRIFTED: my threshold was 1500 where his is 2500, so
+# my gate printed SAFE TO START at a headroom his refuses. That is the
+# two-sources-of-truth defect with a 1000 MB gap, in the tool I wrote to avoid
+# guessing. plan ruled the same mismatch for yelixer: take the owner's number.
+BOSS_HEALTH=/home/jes/boss-clod/box-health.sh
+if [ -f "$BOSS_HEALTH" ]; then
+  # ⛔ VERIFY THE OWNER'S TOOL ACTUALLY RAN. Deferring to a LIVE file in another repo
+  # means my gate's behaviour depends on someone else's editing state -- and it bit
+  # immediately: at 18:25 I deferred and got THEIR syntax error at line 131, mid-edit.
+  # Two minutes later the same file ran clean (they had landed 0540457).
+  # ⚠️ A non-zero rc is NOT the discriminator: BLIND rc=2 is a legitimate verdict from
+  # their tool. The discriminator is whether it EMITTED A VERDICT AT ALL. ⭐ Same rule
+  # as everywhere else tonight: UNPARSEABLE MUST NOT LOOK LIKE A RESULT.
+  # ⭐ Capture once, read the capture many times -- do not re-invoke for the rc.
+  health_out=$(bash "$BOSS_HEALTH" 2>&1); health_rc=$?
+  if printf '%s\n' "$health_out" | grep -q '^\(BOX\||VERDICT|\)'; then
+    echo "  deferring to the axis owner: $BOSS_HEALTH"
+    printf '%s\n' "$health_out"
+    exit "$health_rc"
+  fi
+  echo "  ⛔ $BOSS_HEALTH produced no BOX/VERDICT line (rc=$health_rc) -- it may be mid-edit." >&2
+  printf '%s\n' "$health_out" | head -3 | sed 's/^/     | /' >&2
+  echo "  ⇒ NOT treating that as a verdict. Falling back to this repo's local copy," >&2
+  echo "    whose numbers may have drifted from the owner's. Tell the owner." >&2
+fi
+echo "  ⚠️ $BOSS_HEALTH not found -- falling back to this repo's local copy."
+echo "     Its numbers may have drifted from the owner's. Prefer the owner's tool."
+
+DANGER_AVAILABLE_MB=2500   # boss-clod's figure. Was 1500 here -- drift, corrected.
 CROWDED_LOAD1=30           # crowded, NOT dangerous: only timing-sensitive results suffer.
 
 available=$(awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo)
@@ -79,6 +112,19 @@ for p in $(pgrep -x beam.smp); do
       ;;
   esac
 done
+# ⛔ AN UNVERIFIED /proc READ MUST NOT RESOLVE TO A NUMBER AT ALL. commonplace-log hit
+# this inside its own fix (sentinel -1 for both terms gave `available - (-1 - -1)` =
+# available) and commonplace-markdown hit it adopting that fix (empty terms are 0 in
+# bash arithmetic, so a FAILED read printed headroom == available -- the most
+# flattering answer possible, from no measurement).
+# ⚠️ MY DIRECTION HAPPENS TO BE CONSERVATIVE -- an empty rss reads as 0 and inflates
+# the reserve -- but "happens to be" is exactly why it needs saying. A pid can be
+# found AND the read still fail, and those two absences do not share a code path.
+if [ -n "$serve_pid" ] && ! printf '%s\n' "$serve_rss" | grep -q '^[0-9][0-9]*$'; then
+  echo "  serve rss MB : ⛔ UNREADABLE for pid $serve_pid -- headroom UNVERIFIABLE, computing nothing." >&2
+  echo "VERDICT: BLIND -- the serve was found but its /proc read failed." >&2
+  exit 2
+fi
 if [ -n "$serve_pid" ]; then
   peak=${serve_hwm:-0}
   [ "$peak" -lt "$SERVE_PEAK_FALLBACK_MB" ] && peak=$SERVE_PEAK_FALLBACK_MB

@@ -203,8 +203,25 @@ capture_executed() { # capture_executed <names-file> <test-command...>
   # Kill BY CAPTURED PID -- never a pattern; a waiter or killer built on a pattern
   # that appears in its own argv is the trap this repo has hit four times today.
   kill "$sampler_pid" 2>/dev/null; wait "$sampler_pid" 2>/dev/null
-  box_min=$(sort -n "$sample_file" | head -1)
-  echo "box: available MB minimum DURING this run = ${box_min:-unknown} (samples: $(grep -c . "$sample_file" || echo 0))"
+  local n_samples
+  n_samples=$(grep -c '^[0-9][0-9]*$' "$sample_file" || true)
+  # ⛔ FILTER TO NUMBERS FIRST, then refuse on too few. commonplace-next got three wrong
+  # readings from its own log because a non-numeric stamp sorted ahead of every number
+  # and printed a MAXIMUM as the minimum -- a plausible value, not an error.
+  # commonplace-log-reducer named the other half: sort|head with no refusal prints a
+  # BLANK where a number goes, "a shape a hurried reader completes rather than questions".
+  # ⚠️ Two samples is the floor: one sample is not a window.
+  box_min=$(grep '^[0-9][0-9]*$' "$sample_file" | sort -n | head -1)
+  if [ "${n_samples:-0}" -lt 2 ]; then
+    echo "box: ⛔ ONLY ${n_samples:-0} sample(s) -- refusing to report a minimum from that." >&2
+    echo "box:   Zero samples and a quiet box are otherwise the same observable." >&2
+  else
+    # ⭐ THE THIRD FIELD, from commonplace-next: what the window COVERS. A sampler started
+    # late is a partial instrument that reads exactly like a complete one. This one is
+    # started immediately before the verdict run and killed immediately after the traced
+    # run, in the same function, so it covers the whole of both by construction.
+    echo "box: MINIMUM available ${box_min} MB across ${n_samples} samples; WINDOW COVERS BOTH RUNS IN FULL"
+  fi
   if [ -n "$box_min" ] && [ "$box_min" -lt 1500 ]; then
     echo "box: ⚠️ THAT IS BELOW THE 1500 MB DANGER LINE. This run contributed to a dip a" >&2
     echo "box:   pre-flight could not have seen. Report it; do not read the result as clean." >&2
