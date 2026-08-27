@@ -280,6 +280,13 @@ STANDING, never a new index nobody browses either:
     README.md           beside the errata line
 Re-measured: 0 -> 3.
 
+⚠️ UNITS, because a reader count merges two states a sweep must not merge (yelixer): for
+an EXECUTABLE, "something runs it" and "a human is told about it" are different findings,
+and prose readers are a MITIGATION, not a wiring. For a DOCUMENT, prose is the only reader
+that can exist -- so this 3 is 3 PROSE readers and there is no other kind to have. ⭐ Two
+of the three are comments inside scripts that get RUN, which is the strongest form
+available to a document and still not the same thing as being invoked.
+
 ⭐ AND yelixer's ASYMMETRY, which my own four-bucket sweep scores wrong: UNWIRED WITH A
 HUMAN-FACING POINTER INSIDE A SCRIPT THAT IS READ is not the same state as UNWIRED WITH NO
 POINTER AT ALL. A pointer in the script you are running is a reader; a document in a
