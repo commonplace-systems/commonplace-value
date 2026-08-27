@@ -164,19 +164,29 @@ capture_executed() { # capture_executed <names-file> <test-command...>
   summary=$(grep -oE '[0-9]+ (test|tests|doctest|doctests|property|properties)[^|]*' "$trace_file" | tail -1)
   if [ -z "$summary" ]; then
     echo "REFUSED: could not parse a test summary line; refusing rather than assuming a clean run." >&2
-    command rm -f -- "$trace_file"
+    echo "REFUSED: the complete run is kept at $trace_file" >&2
     return 69
   fi
   case "$summary" in
     *excluded*|*skipped*|*invalid*)
       echo "REFUSED: the run reported [$summary]. Excluded or skipped tests do not move the" >&2
       echo "         total and do not change the exit code; a declared arm may not have run." >&2
-      command rm -f -- "$trace_file"
+      echo "REFUSED: the complete run is kept at $trace_file" >&2
       return 69 ;;
   esac
 
+  # ⭐ KEEP THE WHOLE RUN ON FAILURE, DELETE IT ONLY ON A CLEAN PASS.
+  # boss-clod, after commonplace-log captured rc and then discarded everything but
+  # the summary, leaving the failing arm names unrecoverable: A SUMMARY LINE IS A
+  # VERDICT; THE FAILURE BLOCK IS THE EVIDENCE. gate() already prints every failing
+  # test name, but a printed name is not a kept artefact -- and under load a run can
+  # be expensive enough that re-running to recover evidence is the wrong move.
+  if [ "$rc" -ne 0 ]; then
+    echo "REFUSED: the complete run is kept at $trace_file" >&2
+    return "$rc"
+  fi
   command rm -f -- "$trace_file"
-  return "$rc"
+  return 0
 }
 executed_tests=$(mktemp)
 CLEANUP_FILES+=("$executed_tests")   # ⛔ NOT a second trap -- see the cleanup() note above
