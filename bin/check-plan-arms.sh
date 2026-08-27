@@ -133,6 +133,24 @@ if [ "${#ARMS[@]}" -eq 0 ]; then
   exit 2
 fi
 
+# ⛔⛔ POPULATION CONTROL, not merely a non-emptiness control. A non-emptiness check
+# detects a scanner that read NOTHING; it cannot detect one reading the WRONG
+# POPULATION -- commonplace-biscuit measured exactly that, a top-level-only glob
+# reporting "0 found, 10 files scanned" with the thing it hunts sitting one
+# directory down. ⭐ git is an INDEPENDENT enumerator: it does not share these
+# globs, so a glob that silently narrows disagrees with it and this REFUSES.
+for corpus in "test:.*\.exs" "lib:.*\.ex" "docs:.*\.md"; do
+  dir=${corpus%%:*}; pat=${corpus#*:}
+  mine=$(find "$dir" -type f | grep -c "^$dir/$pat$" || true)
+  theirs=$(git ls-files 2>/dev/null | grep -c "^$dir/$pat$" || true)
+  if [ "${theirs:-0}" -gt 0 ] && [ "${mine:-0}" -ne "$theirs" ]; then
+    echo "FAIL: $dir/ enumeration disagrees -- I see $mine, git tracks $theirs." >&2
+    echo "      One of the two is reading the wrong population; refusing rather than" >&2
+    echo "      reporting a verdict about a corpus I may not have fully seen." >&2
+    exit 2
+  fi
+done
+
 SOURCE_TESTS=$(grep -rho '^\s*test "[^"]*"' test/ | sed 's/.*test "//; s/"$//')
 if [ -n "$EXECUTED_FILE" ]; then
   TESTS=$(grep -v '^$' "$EXECUTED_FILE")
