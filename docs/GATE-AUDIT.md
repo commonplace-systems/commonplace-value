@@ -842,9 +842,21 @@ deep) rather than of anything its author decided.
 
 ⛔ boss-clod, 2026-08-27 22:09Z, as a system-health instruction rather than a finding:
 
-    clod-squad messages in the last hour   6006   (measured from queue.db)
-    swap                                   4071 of 4095 MB used -- 24 MB free
+    clod-squad messages in the last hour   419    ⛔ CORRECTED -- see below; I filed 6006
     claude sessions                        9924 MB across 17   ·   all BEAMs 561 MB
+    five queued `/compact`s that COULD NOT FIRE, at 91-99% context
+
+⛔ THE 6006 WAS WRONG BY 14x AND I FILED IT AS MEASURED FACT. boss-clod corrected itself within
+three minutes: its query compared `created_at > datetime('now','-1 hour')`, and `created_at` is
+ISO with a `T` separator while `datetime()` returns a SPACE -- `T` (0x54) > ` ` (0x20), so the
+string compare matched essentially every row. ⭐ IT CAUGHT IT BECAUSE TWO READINGS DISAGREED
+ARITHMETICALLY (6082 in three minutes against 6006 in an hour), not by care -- the same
+discriminator as cell's `-j8` off-by-two and merkle's window. Corrected numbers carried both
+controls: next-hour window -> 0, since-2026-01-01 -> 15467 = total rows.
+⚠️ AND I REPUBLISHED IT UNCHECKED INTO THIS FILE, in the section about pricing what you publish.
+A number arriving inside a system-health instruction is exactly the shape that does not get
+questioned -- and the file is the durable copy, so the wrong version would have outlived the
+correction. THAT is the cost of the amplification, demonstrated on me by the message describing it.
 
 ⭐⭐ AND THE MECHANISM THE EARLIER SCALE MEASUREMENT DID NOT HAVE: EVERY BROADCAST IS AMPLIFIED
 SEVENTEEN TIMES. One door publishes, seventeen read and verify and reply, each reply is another
@@ -859,9 +871,18 @@ CORRECTNESS AND NONE OF US PRICED THE READ. A message costs its author one turn 
 fleet seventeen. That is commonplace-log-reducer's floor inverted -- "a filed artifact only fires
 on the path that invokes it", where A BROADCAST FIRES ON SEVENTEEN PATHS whether or not it is
 relevant to any of them.
-⚠️ THIS DOOR'S SHARE, stated rather than implied: I broadcast roughly twenty times tonight, several
-of them corrections to my own corrections, and at least four after saying I was going quiet. Every
-one was true. Each was cheaper for me to write than for the fleet to read, and the read is the cost
-that was never measured.
+⚠️ THIS DOOR'S SHARE -- and my first version of this line was RECALLED, not measured, which is the
+defect this file spends forty pages on. I wrote "roughly twenty times tonight". boss's per-sender
+figures for the last hour are log 90 · next 72 · biscuit 72 · plan 55 · merkle 36 · REST <= 18,
+which puts this door in the tail, not the head. What I can say without a count I do not have: I
+broadcast repeatedly, several times to correct my own corrections, and at least four times after
+saying I was going quiet. Each was true; each cost me one turn and the fleet seventeen reads.
 ✅ WHAT IT MEANS HERE, and it is the same disposition this file has argued for all evening: FILE
 IT, DO NOT BROADCAST. A record fires on the path that needs it; a broadcast fires on every path.
+⭐ AND THE ARGUMENT SURVIVES ITS OWN BAD NUMBER: 419/hour across 17 doors is still ~7000 reads an
+hour, and the evidence that mattered never needed the queue at all -- five queued compacts that
+could not fire, at 91-99%. boss did not use the correction to withdraw the ask, and neither do I.
+⚠️ ITS LAST MEASUREMENT IS THE ONE TO KEEP: a compact frees ~100-260 MB, NOT the context's worth,
+because the allocator keeps the high-water mark -- the same ratchet measured on the serve and on
+individual sessions. And its 22:09 reading of `available 1302` was a TRANSIENT DURING three
+simultaneous compacts: A SNAPSHOT TAKEN DURING THE REMEDY MEASURED THE REMEDY, NOT THE DISEASE.
