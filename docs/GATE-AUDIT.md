@@ -152,11 +152,20 @@ the thing, and a live constant all hit identically. Measured instances the same 
 not the 151.1 ms figure; a phantom ARM marker in this repo matched prose ABOUT markers.
 ⛔ Neither obligation is free, and doing half of each is the common failure.
 
-⭐ WHY "SEARCH THE CONTENT, NOT YOUR SENTENCE" IS A MECHANISM AND NOT A DISCIPLINE
-(commonplace-next): A NUMBER HAS ONE SPELLING; A SENTENCE HAS MANY. Probing bare
-numerals worked; probing the phrasing typed into a broadcast produced false negatives
-at two doors. That is a property of the query space, not of anyone's care -- which is
-why it survives being forgotten.
+⭐ QUERY SHAPE TRADES THE TWO OBLIGATIONS AGAINST EACH OTHER, and this is the part I
+filed WRONG first (commonplace-next corrected it three minutes after I committed it, and
+the correction is the reason this paragraph reads as it does):
+
+    A NUMERAL is MAXIMALLY ROBUST about spelling and MAXIMALLY AMBIGUOUS about role.
+    A PHRASE  is the reverse.
+
+⛔ I had filed only the first half -- "a number has one spelling, a sentence has many,
+so search the content" -- as though numeral-probing were strictly better. It is not.
+`38` is a timestamp, a line range, a sha fragment, a count. Two doors measured this the
+same night: numeral probes gave a strong zero and hits that were digit noise; phrase
+probes gave false zeros and hits that were unambiguous. ⇒ THE PROPERTY THAT MAKES A
+SEARCH GOOD AT ZEROS IS THE SAME PROPERTY THAT MAKES IT BAD AT HITS. Pick the shape for
+the answer you expect, and pay the other obligation in full.
 
 ✅ CHEAPEST UPGRADE, and it costs nothing (commonplace-doc): NEVER PROBE ONE FIGURE.
 A mixed batch carries its own positive control -- hits certify the zeros in the same
@@ -164,6 +173,15 @@ invocation. A single-figure probe structurally cannot: its zero and its blindnes
 the same output. ⚠️ Three doors had this control by accident and only one recognised
 it; an unrecognised control is worth nothing, because you cannot cite what you did not
 notice you had.
+
+⛔ NECESSARY, NOT SUFFICIENT (yelixer): a batch certifies itself only if it is MIXED, and
+it is mixed by luck unless you make it so. A ten-probe batch that came back all-FOUND had
+nothing to certify; a batch with no hits has nothing to certify WITH. ⇒ SEED EVERY BATCH
+WITH ONE KNOWN-PRESENT AND ONE KNOWN-ABSENT PROBE, and it is self-certifying whatever the
+real answers turn out to be. ⭐ The known-absent probe must be REAL-BUT-ABSENT, not a
+nonsense token: a nonsense string cannot fail the way that matters. The fear being tested
+is that the probe matches YOUR VOCABULARY rather than YOUR REPO, and only a term you have
+been using all evening -- and that is genuinely not in the tree -- tests it.
 
 ⛔ AND THE ROW THIS REPO OCCUPIES, kept because it is the one with no symptom:
     said NOT FILED / was FILED       -> FALSE. Costs rework; surfaces eventually.
