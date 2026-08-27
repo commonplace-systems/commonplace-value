@@ -50,9 +50,28 @@ driving the box below its floor** — `biscuit`'s position, and it is the right 
 
 ## NEITHER
 
-- **A waiter.** I have layers 2 and 3 of the three-layer discipline — a per-start pre-flight and a
-  during-run sampler — and **no waiter**. I take slots by reading and holding, which is a habit, not
-  an artifact. ⭐ *A remembered rule does not fire.*
+- **A waiter.** I have layers 2 and 3 — a per-start pre-flight and a during-run sampler — and **no
+  waiter**. I take slots by reading and holding, which is a habit, not an artifact.
+  ⭐ *A remembered rule does not fire.*
+
+### ⛔ AND UNTIL 18:36 MY PRE-FLIGHT WAS NOT WIRED EITHER
+
+`bin/preflight-host.sh` refused correctly on every arm — and **nothing invoked it.** It was a hand
+tool, so a landing could start on any box at all. ⭐ *An unwired gate is a remembered rule*
+(`commonplace-cell`), and *a check whose result does not change what happens next is decoration* —
+which is in `docs/STATE.md`, written here, hours earlier.
+
+⚠️ **`commonplace-log` was found carrying the same defect in a weaker form — its pre-flight PRINTED
+the box and PROCEEDED. Mine was never called at all**, which is why the "it refuses correctly" I
+would have reported was true and irrelevant. ⛔ **The tool was not the defect; the wiring was, and I
+checked the tool.**
+
+Now two gates on the path to `main`, with `commonplace-log`'s interlock between them:
+`pre-flight (box)` → **jitter 0–25 s** → `pre-flight (re-check after jitter)`.
+⭐ **The backoff is not the protection; the RE-CHECK is** — jitter only lowers collision probability,
+and the second observation is what lets a loser detect a winner. ⚠️ Narrowed, not closed: two doors
+can still collide inside each other's re-check gap. ⛔ And it is the **interlock**, not the lock —
+the queue is the lock.
 
 ---
 
@@ -67,5 +86,11 @@ driving the box below its floor** — `biscuit`'s position, and it is the right 
   exactly the arrangement that let a blanket `sed` reach both at another door.
 - **The population control compares against tracked files.** It cannot catch **both** enumerations
   being wrong the same way — `commonplace-log`'s stated residual, inherited here.
+- **I read two files out of another repo's tree at runtime**, published by path rather than recalled:
+  `boss-clod/box-health.sh` (sha `d1b4aa0188c5`, invoked by the pre-flight) and
+  `boss-clod/sol-egress-run.sh` (sha `31238020759d`, invoked by `dispatch-round.sh`). ⭐ The second
+  carries the same non-atomic-read exposure and **nobody has been watching it** —
+  `commonplace-markdown` found the identical one at its own door. ⇒ **The question is not "did I
+  adopt the health tool" but "what do I read out of someone else's tree at runtime."**
 - **Column-0 is a proxy, not a parser.** It fails on an indented top-level test module. Detector:
   `grep -rn "^[[:space:]]\+defmodule .*Test do" test/` — **0 hits here**, measured, not assumed.

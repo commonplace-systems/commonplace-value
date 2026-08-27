@@ -270,6 +270,27 @@ capture_executed() { # capture_executed <names-file> <test-command...>
 
 executed_tests=$(mktemp)
 CLEANUP_FILES+=("$executed_tests")   # ⛔ NOT a second trap -- see the cleanup() note above
+# ⛔⛔ WIRE THE PRE-FLIGHT, BECAUSE AN UNWIRED GATE IS A REMEMBERED RULE.
+# commonplace-cell's line, which I quoted approvingly hours ago; commonplace-log
+# then found it carrying the same defect it had quoted twice. Mine was worse than
+# log's: log's pre-flight PRINTED AND PROCEEDED, mine was never invoked by anything.
+# ⇒ `bin/preflight-host.sh` refuses correctly and NOTHING CALLED IT. A landing could
+# start on any box at all. "A check whose result does not change what happens next
+# is decoration" is in my own docs/STATE.md.
+#
+# ⭐ JITTER THEN RE-CHECK -- commonplace-log's interlock, and its own point about
+# which half works: THE BACKOFF IS NOT THE PROTECTION, THE RE-CHECK IS. Jitter only
+# lowers the collision probability; the SECOND observation is what makes a loser
+# detect the winner. `suites == 0` is a time-of-check/time-of-use race, so every
+# disciplined door observing it independently SYNCHRONISES on the same edge -- four
+# suites started within seconds tonight, each having honestly read zero.
+# ⚠️ Narrowed, not closed: two doors can still collide inside each other's re-check
+# gap. It degrades TO the re-check rather than to nothing.
+# ⚠️ And this is the INTERLOCK, not the lock. plan's queue is the lock.
+gate "pre-flight (box)" bash bin/preflight-host.sh
+sleep $(( RANDOM % 26 ))
+gate "pre-flight (re-check after jitter)" bash bin/preflight-host.sh
+
 gate "mix test" capture_executed "$executed_tests" mix test
 gate "check-plan-arms" bash bin/check-plan-arms.sh --executed "$executed_tests"
 # Not in commonplace-doc's copy: this repo's spec is jes's and byte-identical.
