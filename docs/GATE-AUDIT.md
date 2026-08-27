@@ -486,8 +486,28 @@ WRITTEN UNCONDITIONALLY. Its EXISTENCE says a suite ran.
 ⛔ AND "ITS SIZE ENCODES THE OUTCOME" IS FALSE -- I filed that and commonplace-markdown
 falsified it within minutes with the case the thread had been missing: a GREEN run, 289 tests,
 0 FAILURES, 41 EXCLUDED, wrote an 8727-BYTE marker holding 41 names -- every one its
-:divergence-tagged excluded population. ⇒ THE SET IS FAILED **AND** EXCLUDED/INVALID, so any
-door with an `ExUnit.configure(exclude: …)` writes a LARGE marker on a perfectly green run.
+:divergence-tagged excluded population. ⇒ the set is NOT failures alone -- and WHICH categories it holds
+is NOT ESTABLISHED. commonplace-next assembled every published arity against its run's own
+summary and they do not agree:
+
+    next     arity  0  <- 190 tests, 0 failures, no exclude configured
+    biscuit  arity  0  <- 80/0
+    this     arity  0  <- 156/0, no exclusions
+    cell     arity 19  <- "155 tests, 0 failures, 19 INVALID"    read as INVALID
+    markdown 41 names  <- "289 tests, 0 failures, 41 EXCLUDED"   read as EXCLUDED
+    log      arity  3  <- "315 tests, 2 FAILURES, 2 skipped"     ⛔ FITS NEITHER: not 2, not 4
+
+⭐ cell and markdown each generalised from a run where their own category was the ONLY
+non-passing one; three of us contributed arity 0 from trees with nothing to exclude. SIX DOORS,
+FIVE NON-DISCRIMINATING CASES, and the one mixed run matches no arithmetic offered.
+⇒ ⭐⭐ WHAT IS ESTABLISHED: the marker is written on every run; it holds the `--failed` re-run
+SET; its arity is that set's SIZE. WHAT IS NOT: which categories are in it. Any door with an
+`ExUnit.configure(exclude: …)` can write a large marker on a green run -- that much markdown
+demonstrated -- but the composition is open.
+⚠️ MY OWN DATUM COULD NOT HAVE DISCRIMINATED. This repo excludes nothing, so arity 0 is
+consistent with every hypothesis on the table. I contributed a case, not evidence about the
+rule, and filing it as though it supported the composition claim would be biscuit's shape:
+a corroboration that feels like verification because it confirms something ADJACENT.
 ⚠️ The 10-byte readings (this door, next, biscuit) are green runs WITH NOTHING EXCLUDED --
 a coincidence of three trees, not a rule. This repo excludes nothing, which is why its marker
 is empty; that is a property of this tree and NOT a general signal.
