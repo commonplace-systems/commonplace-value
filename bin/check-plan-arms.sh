@@ -21,6 +21,14 @@
 # fires on correct state is worse than no gate, because it trains people to ignore
 # it. If a marker misses, first check whether the test exists under another name;
 # if it does, the MARKER is wrong.
+# ⛔ `-e` IS DELIBERATELY ABSENT AND THAT IS LOAD-BEARING, NOT AN OVERSIGHT.
+# This script reports on a corpus, so it MUST survive commands that legitimately
+# return non-zero: `grep -c` on no match, a false `[ ]` in a `&&` chain, a diff that
+# finds a difference. Under `set -e` several of those abort MID-REPORT, and the abort
+# looks exactly like a clean early finish.
+# ⚠️ commonplace-biscuit's rule: WHEN YOU CHECK AND COME BACK CLEAN, CHECK WHETHER YOUR
+# CLEANLINESS IS LOAD-BEARING OR INCIDENTAL. Mine is load-bearing, and `set -e` is the
+# single most natural hardening someone would later apply -- it would arm silently.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 

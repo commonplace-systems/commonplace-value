@@ -140,56 +140,161 @@ gate() {  # gate <label> <cmd...>: run, keep the verdict line, stop on non-zero
 # adds one. Same shape as the pipefail finding.
 capture_executed() { # capture_executed <names-file> <test-command...>
   local names_file="$1"; shift
-  local trace_file rc=0
-  trace_file=$(mktemp)
-  "$@" --trace >"$trace_file" 2>&1 || rc=$?
-  # ExUnit rewrites each trace line after timing it, separated by CR; take the
-  # final field so one physical test line stays one name under async output.
-  # `(excluded)` entries are dropped -- the gate consumes the RUN, not the tags.
-  awk -F '\r' '{ print $NF }' "$trace_file" |
-    sed -nE '/^[[:space:]]*\* test .* \([^)]*\) \[L#[0-9]+\]$/ { /\(excluded\) \[L#[0-9]+\]$/d; s/^[[:space:]]*\* test //; s/ \([^)]*\) \[L#[0-9]+\]$//; p; }' > "$names_file"
-  command cat "$trace_file"
+  local verdict_file trace_file rc=0 trace_rc=0 summary
 
-  # ⛔ REFUSE ON ANY EXCLUDED/SKIPPED/INVALID, AND ON AN UNPARSEABLE SUMMARY.
-  # From commonplace-merkle-crdt and commonplace-biscuit: `mix test` EXITS 0 and the
-  # TOTAL DOES NOT MOVE when tests are excluded -- only the `N excluded` clause
-  # changes. So a gate that judges this command by exit code, as this one does, is
-  # blind to the exact defect the arms gate was patched for.
-  # ⚠️ The arms gate already catches it here. This is deliberate defence in depth:
-  # two halves that agree hide the silence of either, which is how the reconciliation
-  # sat inert in this very file for four minutes today.
-  # ⭐ UNPARSEABLE MUST NOT LOOK LIKE CLEAN -- biscuit's point. If the summary line
-  # cannot be found at all, refuse rather than assume a good run.
-  local summary
-  summary=$(grep -oE '[0-9]+ (test|tests|doctest|doctests|property|properties)[^|]*' "$trace_file" | tail -1)
+  # ⛔⛔ TWO RUNS, TWO QUESTIONS -- and this is a CORRECTION, not a design.
+  # Until now this drove the whole verdict from ONE `--trace` run. VERIFIED IN THE
+  # INSTALLED SOURCE at ex_unit/lib/ex_unit/runner.ex:564, unconditional:
+  #     defp get_timeout(config, tags) do
+  #       if config.trace do :infinity else Map.get(tags, :timeout, config.timeout) end
+  # ⇒ under --trace a test CANNOT time out, and an explicit --timeout cannot override
+  # it because the tag is never consulted. --trace also forces --max-cases 1, so a
+  # trace-gated suite never runs CONCURRENTLY either. Two blind classes, not one.
+  # MEASURED HERE, one file, @tag timeout: 100 against Process.sleep(400):
+  #     mix test         -> rc 2, "1 test, 1 failure", ExUnit.TimeoutError
+  #     mix test --trace -> rc 0, "1 test, 0 failures"
+  # ⭐ THE DIAGNOSTIC MODE AND THE GATING MODE ARE NOT THE SAME MODE, AND THE ONE
+  # THAT PRINTS MORE IS THE ONE THAT OBSERVES LESS. Reported by commonplace-log,
+  # which paid for it by using --trace to investigate a FLAKY failure -- choosing the
+  # one mode that could not reproduce it.
+  # ⚠️ This does NOT reintroduce two sources of truth: the runs answer DIFFERENT
+  # questions. Plain decides pass/fail; traced enumerates. Both must pass.
+
+  # ⭐⭐ SAMPLE THE BOX *DURING* THE RUN, NOT AT THE ENDS. commonplace-yelixer took 174
+  # samples across one run: pre-flight 4286 MB, post-run 4351 MB, MINIMUM 934 MB --
+  # 566 MB below the danger line, in a window a before/after pair would have
+  # certified as clean. ⇒ A PRE-FLIGHT ANSWERS "MAY I START". ONLY SAMPLING ANSWERS
+  # "WHAT DID MY RUN DO TO THE BOX." It is the extension of my own rule that the
+  # MINIMUM is the number that matters -- and the minimum is unobtainable from the
+  # ends. Costs one background shell and a file.
+  local sample_file sampler_pid box_min
+  sample_file=$(mktemp); CLEANUP_FILES+=("$sample_file")
+  ( while :; do awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo >> "$sample_file"; sleep 2; done ) &
+  sampler_pid=$!
+
+  # ── 1. THE VERDICT RUN: plain, with real timeouts and real concurrency ──────
+  verdict_file=$(mktemp); CLEANUP_FILES+=("$verdict_file")
+  "$@" >"$verdict_file" 2>&1 || rc=$?
+  command cat "$verdict_file"
+
+  summary=$(grep -oE '[0-9]+ (test|tests|doctest|doctests|property|properties)[^|]*' "$verdict_file" | tail -1)
   if [ -z "$summary" ]; then
     echo "REFUSED: could not parse a test summary line; refusing rather than assuming a clean run." >&2
-    echo "REFUSED: the complete run is kept at $trace_file" >&2
+    echo "REFUSED: the complete verdict run is kept at $verdict_file" >&2
     return 69
   fi
   case "$summary" in
     *excluded*|*skipped*|*invalid*)
       echo "REFUSED: the run reported [$summary]. Excluded or skipped tests do not move the" >&2
       echo "         total and do not change the exit code; a declared arm may not have run." >&2
-      echo "REFUSED: the complete run is kept at $trace_file" >&2
+      echo "REFUSED: the complete verdict run is kept at $verdict_file" >&2
       return 69 ;;
   esac
+  # ── 2. THE NAMES RUN: traced. Also the DISCRIMINATOR when the plain run failed. ──
+  # ⛔ DO NOT RETURN EARLY ON A PLAIN FAILURE. The obvious implementation short-circuits
+  # on the first red -- and then commonplace-log's discriminator (plain fails + traced
+  # passes ⇒ timing-or-concurrency class) is UNREACHABLE BY CONSTRUCTION. commonplace-cell
+  # hit exactly that in its own first cut. ⭐ Asking the second run the same question turns
+  # it from a cost into the thing that IDENTIFIES the class.
+  trace_file=$(mktemp); CLEANUP_FILES+=("$trace_file")
+  "$@" --trace >"$trace_file" 2>&1 || trace_rc=$?
 
-  # ⭐ KEEP THE WHOLE RUN ON FAILURE, DELETE IT ONLY ON A CLEAN PASS.
-  # boss-clod, after commonplace-log captured rc and then discarded everything but
-  # the summary, leaving the failing arm names unrecoverable: A SUMMARY LINE IS A
-  # VERDICT; THE FAILURE BLOCK IS THE EVIDENCE. gate() already prints every failing
-  # test name, but a printed name is not a kept artefact -- and under load a run can
-  # be expensive enough that re-running to recover evidence is the wrong move.
+  # ⭐ Stop sampling and report the MINIMUM the box reached while I was running.
+  # Kill BY CAPTURED PID -- never a pattern; a waiter or killer built on a pattern
+  # that appears in its own argv is the trap this repo has hit four times today.
+  # ⛔⛔ THE CLEANUP OF A SAMPLER MUST NEVER BE ABLE TO FAIL THE RUN IT WAS MEASURING.
+  # commonplace-markdown measured this after filing a WRONG external cause for two of
+  # its own dead landings. Under `set -e`, MEASURED HERE in isolation:
+  #     wait <killed child>     -> 143   script exits 143
+  #     kill <already-dead pid> ->   1   script exits 1
+  # ⇒ this line could abort the landing AFTER BOTH SUITES HAD RUN and BEFORE the box
+  # line or any verdict was printed. ⭐ A successful verdict run would leave NO TRACE
+  # and the rc would name a signal nothing had sent -- a cleanup defect wearing the
+  # costume of a gate refusal, with the log stopping exactly where it looks like the
+  # suites never started.
+  # ⚠️ `2>/dev/null` does NOT help: redirecting stderr does not change an exit code.
+  # I had that redirect and it bought nothing.
+  kill "$sampler_pid" 2>/dev/null || true
+  wait "$sampler_pid" 2>/dev/null || true
+  local n_samples
+  n_samples=$(grep -c '^[0-9][0-9]*$' "$sample_file" || true)
+  # ⛔ FILTER TO NUMBERS FIRST, then refuse on too few. commonplace-next got three wrong
+  # readings from its own log because a non-numeric stamp sorted ahead of every number
+  # and printed a MAXIMUM as the minimum -- a plausible value, not an error.
+  # commonplace-log-reducer named the other half: sort|head with no refusal prints a
+  # BLANK where a number goes, "a shape a hurried reader completes rather than questions".
+  # ⚠️ Two samples is the floor: one sample is not a window.
+  box_min=$(grep '^[0-9][0-9]*$' "$sample_file" | sort -n | head -1)
+  if [ "${n_samples:-0}" -lt 2 ]; then
+    echo "box: ⛔ ONLY ${n_samples:-0} sample(s) -- refusing to report a minimum from that." >&2
+    echo "box:   Zero samples and a quiet box are otherwise the same observable." >&2
+  else
+    # ⭐ THE THIRD FIELD, from commonplace-next: what the window COVERS. A sampler started
+    # late is a partial instrument that reads exactly like a complete one. This one is
+    # started immediately before the verdict run and killed immediately after the traced
+    # run, in the same function, so it covers the whole of both by construction.
+    echo "box: MINIMUM available ${box_min} MB across ${n_samples} samples; WINDOW COVERS BOTH RUNS IN FULL"
+  fi
+  if [ -n "$box_min" ] && [ "$box_min" -lt 1500 ]; then
+    echo "box: ⚠️ THAT IS BELOW THE 1500 MB DANGER LINE. This run contributed to a dip a" >&2
+    echo "box:   pre-flight could not have seen. Report it; do not read the result as clean." >&2
+  fi
+
   if [ "$rc" -ne 0 ]; then
-    echo "REFUSED: the complete run is kept at $trace_file" >&2
+    if [ "$trace_rc" -eq 0 ]; then
+      echo "REFUSED: plain mix test FAILED (rc=$rc) but --trace PASSED." >&2
+      echo "         ⇒ TIMING-OR-CONCURRENCY CLASS, not a flake. --trace disables per-test" >&2
+      echo "           timeouts (ex_unit runner.ex:564, unconditional) and forces" >&2
+      echo "           --max-cases 1. DO NOT RETRY THIS AWAY -- the disagreement IS the signal." >&2
+    else
+      echo "REFUSED: plain mix test FAILED (rc=$rc) and --trace ALSO failed (rc=$trace_rc)." >&2
+      echo "         ⇒ NOT the trace class. An ordinary failure; read the verdict run." >&2
+    fi
+    echo "REFUSED: verdict run kept at $verdict_file ; traced run kept at $trace_file" >&2
     return "$rc"
   fi
-  command rm -f -- "$trace_file"
+
+  if [ "$trace_rc" -ne 0 ]; then
+    echo "$trace_file" | tail -20 >&2
+    echo "REFUSED: the traced names run failed (rc=$trace_rc) after the verdict run passed." >&2
+    echo "REFUSED: the complete traced run is kept at $trace_file" >&2
+    return "$trace_rc"
+  fi
+  # ExUnit rewrites each trace line after timing it, separated by CR; take the
+  # final field so one physical test line stays one name under async output.
+  # `(excluded)` entries are dropped -- the gate consumes the RUN, not the tags.
+  awk -F '\r' '{ print $NF }' "$trace_file" |
+    sed -nE '/^[[:space:]]*\* test .* \([^)]*\) \[L#[0-9]+\]$/ { /\(excluded\) \[L#[0-9]+\]$/d; s/^[[:space:]]*\* test //; s/ \([^)]*\) \[L#[0-9]+\]$//; p; }' > "$names_file"
   return 0
 }
+
 executed_tests=$(mktemp)
 CLEANUP_FILES+=("$executed_tests")   # ⛔ NOT a second trap -- see the cleanup() note above
+# ⛔⛔ WIRE THE PRE-FLIGHT, BECAUSE AN UNWIRED GATE IS A REMEMBERED RULE.
+# commonplace-cell's line, which I quoted approvingly hours ago; commonplace-log
+# then found it carrying the same defect it had quoted twice. Mine was worse than
+# log's: log's pre-flight PRINTED AND PROCEEDED, mine was never invoked by anything.
+# ⇒ `bin/preflight-host.sh` refuses correctly and NOTHING CALLED IT. A landing could
+# start on any box at all. "A check whose result does not change what happens next
+# is decoration" is in my own docs/STATE.md.
+#
+# ⭐ JITTER THEN RE-CHECK -- commonplace-log's interlock, and its own point about
+# which half works: THE BACKOFF IS NOT THE PROTECTION, THE RE-CHECK IS. Jitter only
+# lowers the collision probability; the SECOND observation is what makes a loser
+# detect the winner. `suites == 0` is a time-of-check/time-of-use race, so every
+# disciplined door observing it independently SYNCHRONISES on the same edge -- four
+# suites started within seconds tonight, each having honestly read zero.
+# ⚠️ Narrowed, not closed: two doors can still collide inside each other's re-check
+# gap. It degrades TO the re-check rather than to nothing.
+# ⚠️ And this is the INTERLOCK, not the lock. plan's queue is the lock.
+# ⛔ THE LOCK FIRST, THEN THE INTERLOCK. The queue is authoritative; the box check is
+# the safety interlock on top of it. Neither substitutes for the other, and three
+# doors read an empty box as permission from the ordering tonight.
+gate "require-slot" bash bin/require-slot.sh
+gate "pre-flight (box)" bash bin/preflight-host.sh
+sleep $(( RANDOM % 26 ))
+gate "pre-flight (re-check after jitter)" bash bin/preflight-host.sh
+
 gate "mix test" capture_executed "$executed_tests" mix test
 gate "check-plan-arms" bash bin/check-plan-arms.sh --executed "$executed_tests"
 # Not in commonplace-doc's copy: this repo's spec is jes's and byte-identical.
