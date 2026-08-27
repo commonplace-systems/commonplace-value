@@ -195,11 +195,6 @@ if [ $((available - SUITE_COST_MB)) -le "$FLOOR_MB" ]; then
   echo "VERDICT: DO NOT START -- would leave $((available - SUITE_COST_MB))MB, floor ${FLOOR_MB}MB."
   exit 1
 fi
-if false; then
-  echo "VERDICT: DO NOT START -- available ${available}MB is below the ${DANGER_AVAILABLE_MB}MB danger line." >&2
-  echo "VERDICT: DO NOT START -- available ${available}MB is below the ${DANGER_AVAILABLE_MB}MB danger line."
-  exit 1
-fi
 
 # ⭐ A SINGLE SAMPLE HIDES A DIP. Mine read 1984 MB while the minimum over the
 # preceding minute was 1586 -- comfortable-looking, and 86 MB from the line.
