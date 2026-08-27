@@ -287,6 +287,10 @@ CLEANUP_FILES+=("$executed_tests")   # ⛔ NOT a second trap -- see the cleanup(
 # ⚠️ Narrowed, not closed: two doors can still collide inside each other's re-check
 # gap. It degrades TO the re-check rather than to nothing.
 # ⚠️ And this is the INTERLOCK, not the lock. plan's queue is the lock.
+# ⛔ THE LOCK FIRST, THEN THE INTERLOCK. The queue is authoritative; the box check is
+# the safety interlock on top of it. Neither substitutes for the other, and three
+# doors read an empty box as permission from the ordering tonight.
+gate "require-slot" bash bin/require-slot.sh
 gate "pre-flight (box)" bash bin/preflight-host.sh
 sleep $(( RANDOM % 26 ))
 gate "pre-flight (re-check after jitter)" bash bin/preflight-host.sh

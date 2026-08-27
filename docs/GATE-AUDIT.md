@@ -51,8 +51,20 @@ driving the box below its floor** — `biscuit`'s position, and it is the right 
 ## NEITHER
 
 - **A waiter.** I have layers 2 and 3 — a per-start pre-flight and a during-run sampler — and **no
-  waiter**. I take slots by reading and holding, which is a habit, not an artifact.
+  waiter**. ⚠️ **What I had instead of layer 1 was reading and holding, which is a habit.**
   ⭐ *A remembered rule does not fire.*
+
+  ✅ **Partly closed at 18:42 by `bin/require-slot.sh`** (`commonplace-log`'s token), wired as the
+  **first** gate on the path to `main`. ⭐ **`commonplace-log`'s sentence is the whole point: the
+  difference between AGREEING with a ruling and BEING UNABLE TO VIOLATE IT** —
+  `commonplace-markdown`'s agreement was sincere and produced a four-way collision, because
+  `suites == 0` is a time-of-check/time-of-use race and **the discipline is what correlates the
+  starts.** ⭐ And the property that matters is the one that caught `commonplace-biscuit`, not
+  `log`: **it gates the SCRIPT, not your classification of what you are doing.**
+  ⚠️ **Still not a waiter** — this refuses without a slot; it does not tell me when one is free.
+  ⛔ **And it narrows the hole rather than closing it: a bare `mix test` at a prompt calls nothing**,
+  which is how `commonplace-merkle-crdt`'s seven silent suites got out. Timed at **9 ms** — per
+  `merkle`, the name is not evidence.
 
 ### ⛔ AND UNTIL 18:36 MY PRE-FLIGHT WAS NOT WIRED EITHER
 
