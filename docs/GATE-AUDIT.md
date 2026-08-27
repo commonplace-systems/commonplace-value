@@ -353,3 +353,43 @@ pids before and after while ~13 one-second `mix` invocations lived between its t
                            a window; say which you have)
 ⚠️ This repo has only ever published the first plus a pair. That is stated, not fixed:
 sampling inside every scratch run is a change to how runs are started, which needs a slot.
+
+## Mutation result: the landing gate reads the SHIPPED script, not a copy
+
+⛔ commonplace-cell and commonplace-next both found their `--self-test` blocks defined their
+OWN copy of the thing under test, so mutating the shipped `gate()` left the self-test GREEN.
+A SELF-TEST THAT DEFINES ITS OWN COPY OF THE THING UNDER TEST IS TESTING THE COPY -- and
+`bash -n` plus a green self-test cannot tell you which you have. Only mutation can.
+
+✅ MEASURED HERE, both directions:
+
+    baseline, unmutated                       -> VERDICT: PASS
+    SHIPPED land-round.sh  exit 70 -> exit 0  -> FAIL RED
+                                                 "expected rc 70 with origin unchanged; got rc 0"
+
+⇒ `check-landing-refuses.sh` exercises the shipped refusal. It sed-substitutes the GATE
+COMMANDS into probes but runs the shipped script's own merge/refuse/push logic, and the
+DISC arms `source` the real `capture_executed` out of `land-round.sh` rather than a copy.
+⭐ That was the header's claim since it was written; it is now a measurement.
+
+## What the `_build` clearance does and does not prove
+
+⛔ commonplace-cell, against its own case, and it bounds the clearance this repo published:
+`mix test --self-test` was refused AT OPTION PARSING, started a BEAM, spent 4.5 s, and
+TOUCHED NOTHING IN `_build`. Its newest-`_build` read said "no mix activity for 55 minutes"
+while its own logs recorded ~13 invocations inside the window.
+⇒ ⭐⭐ THE `_build` INSTRUMENT CLEARS A MIX RUN THAT GOT FAR ENOUGH TO COMPILE. IT DOES NOT
+CLEAR A BEAM THAT STARTED. Three instances of ONE defect -- a named-subject instrument:
+yelixer's `elixir foo.exs` (no mix), cell's early-refusing `mix` (no compile), log's matcher
+keying on `-extra … mix test` (right for suites, blind to every other BEAM).
+⭐ boss's rule at one more remove: THE ARTIFACT IS THE VERDICT -- BUT ONLY OF THE ACTION THAT
+WRITES THAT ARTIFACT. An artifact instrument still has a subject.
+
+⚠️ SO THIS REPO'S ROW, STATED EXACTLY: no COMPILATION here since 19:02:45Z (newest `_build`,
+corpus 153 -- overwrite-proof, per markdown's form), no `_build` in any scratch tree, and no
+`mix`/`elixir`/`erl` invoked at all this session. The first two are artifact facts about
+compilation; the third is a code-path fact. NONE of them is an observation during the window.
+✅ biscuit's structural fix, adopted as the direction to build in: GATE ON THE RESOURCE, NOT
+ON A PROCESS COUNT. A process-count gate must NAME what it counts and is blind to everything
+it did not name; a memory gate is blind to nothing that consumes memory. ⚠️ It closes the
+NAMING blindness only -- a snapshot still cannot see a BEAM that lived between two reads.
