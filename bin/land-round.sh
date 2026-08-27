@@ -53,7 +53,16 @@ if [ -z "$root" ]; then
   self_copy="$(mktemp)"; cat "$0" > "$self_copy"
   exec bash "$self_copy" --root "$root" --rm-self "$@"
 fi
-[ "$rm_self" -eq 1 ] && trap 'rm -f "$0"' EXIT
+# ⛔ ONE EXIT TRAP, because a second `trap ... EXIT` REPLACES the first and the
+# first file leaks -- demonstrated in isolation, not assumed. Adding the
+# executed-names trap further down silently disarmed this one, and the obvious
+# check missed it: `land-round.sh nonexistent` exits at the branch check BEFORE
+# the second trap is installed, so it measured a state that never overlapped.
+# ⚠️ A cleanup that another cleanup can uninstall is not cleanup.
+CLEANUP_FILES=()
+cleanup() { [ "${#CLEANUP_FILES[@]}" -eq 0 ] || rm -f -- "${CLEANUP_FILES[@]}"; }
+trap cleanup EXIT
+[ "$rm_self" -eq 1 ] && CLEANUP_FILES+=("$0")
 
 branch="${1:?round branch, e.g. sol/phase-6}"
 cd "$root"
@@ -116,8 +125,37 @@ gate() {  # gate <label> <cmd...>: run, keep the verdict line, stop on non-zero
   fi
   echo "$out" | tail -1
 }
-gate "mix test" mix test
-gate "check-plan-arms" bash bin/check-plan-arms.sh
+# ⭐ CAPTURE THE TESTS THAT ACTUALLY RAN, and hand them to the arms gate.
+# From commonplace-plan's consolidated patch (commonplace-markdown 0454e9c),
+# ported by hand: their land-round.sh and mine have diverged too far for the diff
+# to apply, so the FIX travels, not the file.
+#
+# ⛔ WHY. bin/check-plan-arms.sh certifies that a declared arm EXISTS. It cannot
+# tell whether that arm RAN. Measured at commonplace-next: one
+# `ExUnit.configure(exclude: [:integration])` plus `@moduletag :integration` on six
+# files silently removed 38 declared arms from the run and the gate still printed
+# PASS. One line, thirty-eight arms.
+# ⚠️ This repo has no exclusion today -- so the defect CANNOT fire here yet. That
+# is safety by ABSENCE, which is not protection: it goes live the moment anyone
+# adds one. Same shape as the pipefail finding.
+capture_executed() { # capture_executed <names-file> <test-command...>
+  local names_file="$1"; shift
+  local trace_file rc=0
+  trace_file=$(mktemp)
+  "$@" --trace >"$trace_file" 2>&1 || rc=$?
+  # ExUnit rewrites each trace line after timing it, separated by CR; take the
+  # final field so one physical test line stays one name under async output.
+  # `(excluded)` entries are dropped -- the gate consumes the RUN, not the tags.
+  awk -F '\r' '{ print $NF }' "$trace_file" |
+    sed -nE '/^[[:space:]]*\* test .* \([^)]*\) \[L#[0-9]+\]$/ { /\(excluded\) \[L#[0-9]+\]$/d; s/^[[:space:]]*\* test //; s/ \([^)]*\) \[L#[0-9]+\]$//; p; }' > "$names_file"
+  command cat "$trace_file"
+  command rm -f -- "$trace_file"
+  return "$rc"
+}
+executed_tests=$(mktemp)
+CLEANUP_FILES+=("$executed_tests")   # ⛔ NOT a second trap -- see the cleanup() note above
+gate "mix test" capture_executed "$executed_tests" mix test
+gate "check-plan-arms" bash bin/check-plan-arms.sh --executed "$executed_tests"
 # Not in commonplace-doc's copy: this repo's spec is jes's and byte-identical.
 gate "check-spec-pristine" bash bin/check-spec-pristine.sh
 # ⭐ The gate-on-the-gate, required by jes's composition ruling §14.5: prove a
