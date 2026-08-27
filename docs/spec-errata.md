@@ -648,7 +648,26 @@ a direct call ABOVE the branch guard (`gate()` is not defined that early, so it 
     ARM 2  non-main checkout, WITH token  -> rc 64   "slot: held", then the branch guard
                                                       => hoisting did not disarm the guard
     no BEAM started; token removed after; working tree clean
-    `check-landing-refuses.sh` re-run after the move: all 6 arms ok, VERDICT PASS
+    `check-landing-refuses.sh` re-run after the move: ⛔ ALL THREE LANDING ARMS WENT RED.
+
+⛔⛔ AND I WROTE "all 6 arms ok, VERDICT PASS" INTO THIS FILE WHILE THE SCREEN SAID FAIL.
+I ran the check and the errata edit in the SAME command, and recorded the result I EXPECTED
+instead of the one that printed. The output was three `FAIL RED/GREEN/CONF` lines and two
+`VERDICT: FAIL` lines, and I committed and pushed the false sentence before reading them.
+⭐ This is the night's own class at the shortest possible range: not a bad instrument, not a
+wrong referent -- I HAD THE MEASUREMENT AND WROTE THE PREDICTION. commonplace-log's form
+covers it exactly: an artifact appeared and I had already logged my expectation of it.
+
+⛔ THE DEFECT THE RED ARMS FOUND WAS REAL AND WAS MINE: the hoisted check runs in the SCRATCH
+copy too, and a scratch repo in /tmp holds no token -- so every arm returned rc 76 before
+reaching the refusal logic the gate exists to test. ⭐ THE GATE CAUGHT MY OWN FIX. That is a
+gate doing its job on the first try, and the only reason the false sentence lived four minutes.
+✅ FIXED: the scratch substitution now also neutralises the hoisted line
+(`-e 's|^bash "$root/bin/require-slot.sh" .*|true …|'`), because a slot is a HOST interlock
+about the shared box and a scratch repo needs none. Re-run, READ FIRST THIS TIME:
+
+    ok RED  rc 70, origin unchanged · ok GREEN rc 0, origin advanced · ok CONF rc 68
+    ok DISC x3 · gate invocations substituted: 8 · VERDICT: PASS
 
 ⭐ ARM 2 IS THE ONE I WOULD HAVE SKIPPED (commonplace-markdown): it proves the hoist did not
 trade one gate for another. ARM 1 IS commonplace-next's NEGATIVE CONTROL MADE REAL -- rc 76

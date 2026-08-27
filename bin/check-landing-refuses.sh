@@ -77,7 +77,16 @@ build_scratch() {  # build_scratch <gate-command>
   mkdir -p "$R/bin"
   # Substitute EVERY gate line with the controllable probe, and drop the
   # mix-specific line that has no meaning in a scratch repo.
-  sed -e "s|^gate .*|gate \"probe\" $1|" -e '/^mix deps.get/d' "$SCRIPT" > "$R/bin/land-round.sh"
+  # ⛔ ALSO NEUTRALISE THE HOISTED SLOT CHECK. It is a HOST-level interlock about the shared
+  # box; a scratch repo in /tmp holds no slot and needs none, and the property under test here
+  # is "does the landing script reach `git push`", not "did someone queue".
+  # ⚠️ FOUND BY THIS GATE GOING RED THE MOMENT require-slot was hoisted (errata V16): every arm
+  # returned rc 76 before reaching the logic it exists to test. That is the gate working -- and
+  # I had already written "all 6 arms ok" into the errata from EXPECTATION while the screen said
+  # FAIL. The output was on the screen and I did not read it.
+  sed -e "s|^gate .*|gate \"probe\" $1|" \
+      -e 's|^bash "$root/bin/require-slot.sh" .*|true  # slot check: not applicable in a scratch repo|' \
+      -e '/^mix deps.get/d' "$SCRIPT" > "$R/bin/land-round.sh"
   echo seed > "$R/seed.txt"; echo shared > "$R/shared.txt"
   git -C "$R" add -A; git -C "$R" commit -qm seed
   git -C "$R" remote add origin "$T/origin.git"; git -C "$R" push -q -u origin main
