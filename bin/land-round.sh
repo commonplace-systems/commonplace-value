@@ -149,8 +149,44 @@ capture_executed() { # capture_executed <names-file> <test-command...>
   awk -F '\r' '{ print $NF }' "$trace_file" |
     sed -nE '/^[[:space:]]*\* test .* \([^)]*\) \[L#[0-9]+\]$/ { /\(excluded\) \[L#[0-9]+\]$/d; s/^[[:space:]]*\* test //; s/ \([^)]*\) \[L#[0-9]+\]$//; p; }' > "$names_file"
   command cat "$trace_file"
+
+  # ⛔ REFUSE ON ANY EXCLUDED/SKIPPED/INVALID, AND ON AN UNPARSEABLE SUMMARY.
+  # From commonplace-merkle-crdt and commonplace-biscuit: `mix test` EXITS 0 and the
+  # TOTAL DOES NOT MOVE when tests are excluded -- only the `N excluded` clause
+  # changes. So a gate that judges this command by exit code, as this one does, is
+  # blind to the exact defect the arms gate was patched for.
+  # ⚠️ The arms gate already catches it here. This is deliberate defence in depth:
+  # two halves that agree hide the silence of either, which is how the reconciliation
+  # sat inert in this very file for four minutes today.
+  # ⭐ UNPARSEABLE MUST NOT LOOK LIKE CLEAN -- biscuit's point. If the summary line
+  # cannot be found at all, refuse rather than assume a good run.
+  local summary
+  summary=$(grep -oE '[0-9]+ (test|tests|doctest|doctests|property|properties)[^|]*' "$trace_file" | tail -1)
+  if [ -z "$summary" ]; then
+    echo "REFUSED: could not parse a test summary line; refusing rather than assuming a clean run." >&2
+    echo "REFUSED: the complete run is kept at $trace_file" >&2
+    return 69
+  fi
+  case "$summary" in
+    *excluded*|*skipped*|*invalid*)
+      echo "REFUSED: the run reported [$summary]. Excluded or skipped tests do not move the" >&2
+      echo "         total and do not change the exit code; a declared arm may not have run." >&2
+      echo "REFUSED: the complete run is kept at $trace_file" >&2
+      return 69 ;;
+  esac
+
+  # ⭐ KEEP THE WHOLE RUN ON FAILURE, DELETE IT ONLY ON A CLEAN PASS.
+  # boss-clod, after commonplace-log captured rc and then discarded everything but
+  # the summary, leaving the failing arm names unrecoverable: A SUMMARY LINE IS A
+  # VERDICT; THE FAILURE BLOCK IS THE EVIDENCE. gate() already prints every failing
+  # test name, but a printed name is not a kept artefact -- and under load a run can
+  # be expensive enough that re-running to recover evidence is the wrong move.
+  if [ "$rc" -ne 0 ]; then
+    echo "REFUSED: the complete run is kept at $trace_file" >&2
+    return "$rc"
+  fi
   command rm -f -- "$trace_file"
-  return "$rc"
+  return 0
 }
 executed_tests=$(mktemp)
 CLEANUP_FILES+=("$executed_tests")   # ⛔ NOT a second trap -- see the cleanup() note above
@@ -163,6 +199,7 @@ gate "check-spec-pristine" bash bin/check-spec-pristine.sh
 # with its own bare origin and never touches this one. Substituting the gates
 # means the copy under test cannot recurse into this line.
 gate "check-acceptance-arms" bash bin/check-acceptance-arms.sh
+gate "check-evidence-floors" bash bin/check-evidence-floors.sh
 gate "check-landing-refuses" bash bin/check-landing-refuses.sh
 git push -q origin main "$branch"
 git fetch -q origin
