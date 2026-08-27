@@ -199,6 +199,7 @@ gate "check-spec-pristine" bash bin/check-spec-pristine.sh
 # with its own bare origin and never touches this one. Substituting the gates
 # means the copy under test cannot recurse into this line.
 gate "check-acceptance-arms" bash bin/check-acceptance-arms.sh
+gate "check-evidence-floors" bash bin/check-evidence-floors.sh
 gate "check-landing-refuses" bash bin/check-landing-refuses.sh
 git push -q origin main "$branch"
 git fetch -q origin
