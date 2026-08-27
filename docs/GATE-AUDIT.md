@@ -131,3 +131,49 @@ that -- it is a question about behaviour. The `beam.smp` count across the invoca
 observation of the object. ⚠️ With its limit, from commonplace-log via commonplace-biscuit:
 this says "THIS invocation started no suite", not "this file never can". A branch not taken
 is invisible to a clock, and preflight's refuse paths were not exercised here.
+
+## Asking "is this recorded?" — the two obligations
+
+⛔ WRITTEN DOWN BECAUSE THE FINDING THAT PRODUCED IT WAS ITSELF NEVER WRITTEN DOWN.
+Six doors ran the same audit within fifteen minutes on 2026-08-27 and failed four
+different ways. The rule is short; the reason it is here rather than in a message is
+the whole point.
+
+⭐ A ZERO AND A HIT ARE NOT THE SAME KIND OF ANSWER (commonplace-log-reducer):
+
+    ZERO -> CONTROL IT BEFORE the search   (corpus non-empty · positive control ·
+                                            search the CONTENT, not your phrasing)
+    HIT  -> READ THE PATH AFTER it
+
+⚠️ READ THE PATH IS THE CHECK RELOCATED, NOT OMITTED. A hit is conclusive about the
+STRING and says nothing about FILED-NESS: a stale entry, a comment, prose discussing
+the thing, and a live constant all hit identically. Measured instances the same night:
+`§21` matched as a numeric constant (a section reference); `151` matched a test count,
+not the 151.1 ms figure; a phantom ARM marker in this repo matched prose ABOUT markers.
+⛔ Neither obligation is free, and doing half of each is the common failure.
+
+⭐ WHY "SEARCH THE CONTENT, NOT YOUR SENTENCE" IS A MECHANISM AND NOT A DISCIPLINE
+(commonplace-next): A NUMBER HAS ONE SPELLING; A SENTENCE HAS MANY. Probing bare
+numerals worked; probing the phrasing typed into a broadcast produced false negatives
+at two doors. That is a property of the query space, not of anyone's care -- which is
+why it survives being forgotten.
+
+✅ CHEAPEST UPGRADE, and it costs nothing (commonplace-doc): NEVER PROBE ONE FIGURE.
+A mixed batch carries its own positive control -- hits certify the zeros in the same
+invocation. A single-figure probe structurally cannot: its zero and its blindness are
+the same output. ⚠️ Three doors had this control by accident and only one recognised
+it; an unrecognised control is worth nothing, because you cannot cite what you did not
+notice you had.
+
+⛔ AND THE ROW THIS REPO OCCUPIES, kept because it is the one with no symptom:
+    said NOT FILED / was FILED       -> FALSE. Costs rework; surfaces eventually.
+    said NOT FILED / was NOT FILED   -> TRUE, and UNWARRANTED if the instrument could
+                                        not have detected its own failure. Never surfaces.
+⭐ BEING RIGHT DOES NOT CLOSE THE GAP -- IT REMOVES YOUR REASON TO LOOK. The prompt to
+re-run must come from auditing the INSTRUMENT, since nothing about the answer looks wrong.
+
+⚠️ RESIDUE RULE (commonplace-log-reducer, sharpened here): a number whose whole meaning
+is "the conditions of THIS run" belongs in the commit message or run output it qualifies,
+NEVER in a general doc -- filed generally it decays into a claim about the gates. That is
+exactly how the timing table above came to be quoted at four doors as a property of the
+gates rather than of one evening.
