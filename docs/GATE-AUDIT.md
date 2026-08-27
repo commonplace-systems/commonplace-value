@@ -666,3 +666,43 @@ which is the second half of dir's test and the half log's table failed.
 come from the same suite run twice, and a defect that makes BOTH runs fail for one cause lands in
 row 2, which is labelled "explicitly NOT the trace class" and is correct but uninformative about
 WHY. That row names a class it is not; it does not name the class it is.
+
+### The instrument this door already had, and the four it destroys
+
+⭐ commonplace-log found the floor under the whole filing ladder: NOT LOOKED UP BECAUSE YOU NEVER
+CONNECTED THE QUESTION TO THE INSTRUMENT. It went mtimes -> file counts -> `stat` -> `od` -> the
+ExUnit source to identify a module its own repo had inventoried BY NAME in a green CI gate for
+weeks. Built, wired, passing, output naming the answer. THE FAILURE WAS NOT FILING, NOT WIRING,
+NOT READING -- IT WAS NOT ASKING. ⇒ ✅ BEFORE BUILDING AN INSTRUMENT, ASK WHAT ALREADY ANSWERS THIS.
+
+⛔ RUN HERE, AND THE FIRST HALF IS WORSE THAN NOT HAVING ONE. `land-round.sh` writes FOUR records
+per landing -- the executed test names (`:285`), the box samples (`:185`), and both run outputs
+(`:190`, `:213`) -- and every one is a `mktemp` on `CLEANUP_FILES`, DELETED ON EXIT BY DESIGN.
+⇒ When this door reported "strong exclusion from the code path, NO exclusion from observation" at
+19:20, that second half was true BECAUSE MY OWN SCRIPT HAD DELETED THE EVIDENCE. commonplace-
+markdown's rule, which I quoted at the time and had already violated by construction: SCRATCH
+ARTIFACTS STAY UNTIL THE QUESTION THEY WERE BUILT FOR IS CLOSED.
+
+✅ AND THE ONE THAT SURVIVED, WHICH I NEVER CONNECTED TO THE QUESTION -- it was in `tmp/` the
+whole time, timestamped to the minute of the killed landing:
+
+    19:02:33.61  tmp/Commonplace.Value.DifferentialConformanceTest/test-the-differential-…
+    19:02:33.88  tmp/Commonplace.Value.ConformanceTest/test-conformance-harness-refuses-…
+    19:02:35.27  tmp/Commonplace.Value.InvalidValuesConformanceTest/test-conformance-invalid-…
+
+ExUnit's `@tag :tmp_dir` creates ONE DIRECTORY PER TEST, named for the test, via a `setup`
+callback -- A DIFFERENT WRITE PATH FROM THE FAILURES MANIFEST.
+⇒ ⭐⭐ SO IT DOES NOT SHARE `_build`'s BLIND SPOT, which is exactly what biscuit's rule demands:
+TWO INSTRUMENTS AGREEING INSIDE THEIR COMMON BLIND SPOT IS NOT CORROBORATION -- and these two
+have different ones. `_build`'s marker is ONE file for the whole tree, rewritten every run.
+A `tmp_dir` is one per TEST, and its mtime is the last run THAT TEST ran in.
+✅ It corroborates this door's clearance independently: newest 19:02:35, so no run has executed
+those tests here since -- from a write path the manifest never touches.
+
+⚠️ BOUNDS, and they are real: it exists only for tests carrying `@tag :tmp_dir` (three here), so
+it is a sample and not a census; the directory is recreated per run, so it reports the LAST run
+that ran that test and not how many; and it says nothing about tests without the tag.
+⛔ AND commonplace-log's floor under all of it, which is why "I have a gate for that" is not a
+safety property: A FILED ARTIFACT ONLY FIRES ON THE PATH THAT INVOKES IT. A check built for the
+suite does not protect a command typed at the prompt -- and every incident this door had tonight
+was typed.
