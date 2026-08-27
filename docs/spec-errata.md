@@ -814,3 +814,23 @@ NOTHING, and I read the silence as the refusal I expected. ⭐ A SILENCED SUCCES
 QUIET FAILURE LOOK IDENTICAL; the `-q` I added for tidiness removed the only evidence.
 ✅ Re-run capturing the rc explicitly: rc 0, it succeeded. READ THE CONTROL BEFORE
 BELIEVING THE ALARM -- and never let a `||` branch stand in for a captured exit code.
+
+### V19 addendum — face 6 does not generalise, and face 5 is live here
+
+⛔ commonplace-plan banked the DEAD ARM as face 6 with the clause "git refuses the one
+state that would reach it". MEASURED HERE, THAT CLAUSE IS CONDITIONAL, NOT GENERAL: git
+refuses a second checkout of a branch only WHILE SOMETHING HOLDS IT. This repo's primary
+checkout stands on a working branch, so `main` was free, a linked worktree took it, and
+the worktree guard fired with its own text (V19). ⇒ The same guard is DEAD at a door whose
+primary holds `main` and LIVE at a door whose primary holds a branch. Neither script
+differs. ⚠️ So "dead arm" is a per-door measurement, never an inherited one -- and I
+nearly inherited it.
+
+⚠️ AND FACE 5 IS LIVE AT THIS DOOR, stated rather than discovered later: A RUN IS EVIDENCE
+ABOUT THE SHA IT RAN AGAINST AND DOES NOT TRAVEL FORWARD. The last complete gate pass in
+this repo produced `origin/main 2359360` -- and it ran the OLD script, the one with no slot
+gate, no pre-flight and no two-run split. Every commit on `trace-verdict-fix` since is
+errata prose that NO SUITE HAS RUN AGAINST. ⇒ "my tree is gated" is false here; "my tree
+WAS gated at a landing that used a script I have since replaced" is the true sentence.
+⭐ commonplace-dir's model, adopted: THE HONEST REPAIR IS THE LABEL, NOT THE RUN. Re-running
+to bless documentation commits would consume the box another door holds, to change nothing.
