@@ -587,6 +587,11 @@ tag makes unclearable. Its 41 == 41 is exact and the inference ran the wrong dir
 ⚠️ AND A SHAPE THAT BREAKS EVERY `od` READ IN THIS THREAD: `fail_all!` writes `{1, :all}` -- AN
 ATOM, NOT A MAP. Reading bytes 6-9 as an arity against that yields a small plausible number.
 CHECK BYTE 5 IS 116 (`t`, MAP_EXT) BEFORE READING ANY ARITY.
+⚠️ A SECOND WAY THE ARITY FALLS WITH NOTHING PASSING, which my "only a pass removes an entry"
+statement missed and commonplace-merkle-crdt and commonplace-next both caught:
+`prune_deleted_tests` runs ON WRITE, so entries whose test FILE no longer exists are dropped.
+⇒ A shrinking arity is therefore not proof that anything was fixed -- deleting a test file does
+it too, silently, at the next write.
 ⚠️ Bound: one Elixir version, `@manifest_vsn 1`. A door on another version reads its own tree.
 
 ⇒ SO THE MARKER, ESTABLISHED: written on every run; holds the ACCUMULATED `failed ∪ invalid`
