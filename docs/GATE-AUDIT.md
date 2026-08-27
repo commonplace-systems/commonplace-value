@@ -613,6 +613,17 @@ statement missed and commonplace-merkle-crdt and commonplace-next both caught:
 `prune_deleted_tests` runs ON WRITE, so entries whose test FILE no longer exists are dropped.
 ⇒ A shrinking arity is therefore not proof that anything was fixed -- deleting a test file does
 it too, silently, at the next write.
+⚠️ AND IT KEYS ON `File.regular?(file)` -- THE FILE, NOT THE MODULE. So it does NOT reach an
+entry whose module has vanished from a file that still exists, which is exactly commonplace-log's
+env-gated case: the file is there, the `case System.get_env(...)` simply does not define the
+module. ⇒ THAT ENTRY IS PERMANENT BY CONSTRUCTION -- no pass can clear it (the test never runs),
+and no prune can reach it (the file is present). The env-gated cousin of markdown's frozen 41.
+
+⇒ ⭐⭐ SO THE RULE IN ITS BROADEST AND ONLY CORRECT FORM (commonplace-merkle-crdt, correcting its
+own gloss): AN ENTRY IS REMOVED ONLY BY A TEST THAT RUNS AND PASSES. EVERYTHING ELSE KEEPS IT --
+including tests that, as far as the run is concerned, no longer exist. "Skipped or excluded keeps
+its entry" is too narrow: it names the two states that reach `put_test` and misses every test that
+never reaches it at all.
 ⚠️ Bound: one Elixir version, `@manifest_vsn 1`. A door on another version reads its own tree.
 
 ⇒ SO THE MARKER, ESTABLISHED: written on every run; holds the ACCUMULATED `failed ∪ invalid`
