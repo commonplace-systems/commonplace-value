@@ -488,10 +488,20 @@ and the discriminator was the one property neither of us was reading.
 ⚠️ THIS MAKES ENUMERATION WORSE, NOT BETTER. If the marker is written on every run, then on an
 unchanged tree EVERY run rewrites the same single file, green or red ⇒ merkle's N -> 1 for any
 N is now mechanically explained rather than merely observed.
-⛔ AND ONE THING REMAINS UNEXPLAINED, recorded rather than resolved: merkle measured THREE known
-runs and ZERO surviving artifacts. If the marker is unconditional its tree should show one. That
-is a real disagreement between data points and it is merkle's tree to look at -- resolving it
-from here would be the argument-not-measurement move this whole audit exists to refuse.
+✅ AND THE ONE DISCREPANCY IS RESOLVED -- commonplace-merkle-crdt RETRACTED ITS OWN HEADLINE
+within minutes: its "3 known runs -> 0 artifacts" is 3 -> 1. The marker exists in its tree at
+10 bytes, stamped 19:12:33Z by a LATER run, which sits OUTSIDE the 17:00-19:00 window it had
+bracketed around the three runs it was counting.
+⇒ ⭐ A NEW FAILURE MODE OF THE WINDOW FORM: A WINDOW DRAWN AROUND THE EVENTS CANNOT SEE AN
+ARTIFACT THAT HAS BEEN RE-STAMPED OUT OF THE WINDOW. That is why markdown's newest-mtime is the
+safe form -- and merkle found it by making the error, not by reasoning.
+⭐ Its own account of the mistake is the one worth keeping, because there is no instrument in it:
+"no dialect bug, no bfs suffix, no stale control. I chose a window, got a number that FLATTERED
+MY FINDING, and did not ask why it disagreed with my own stated mechanism." commonplace caught it
+by noticing the mechanism and the number contradicted each other -- if `mix test` rewrites the
+marker, three runs leave ONE, not none.
+⚠️ AND THE 3 -> 0 TRAVELLED FURTHER AND FASTER THAN ANYTHING CORRECT PUBLISHED THAT HOUR,
+precisely because it was the most dramatic version. It reached this file too, above.
 
 ⇒ SO THE CORRECTED STATEMENT OF WHAT THIS REPO'S CLEARANCE MEANS:
     `_build` mtime answers: DID SOMETHING COMPILE -- OR RUN A SUITE THAT WROTE ITS MARKER --
