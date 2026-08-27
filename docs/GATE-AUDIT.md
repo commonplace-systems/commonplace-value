@@ -809,3 +809,31 @@ never names anything.
 because a slot protocol whose stated subject is suites, on a box where the doors enforcing it are
 19× the load they ration, is a claim about the wrong quantity -- and the number belongs next to
 the gate's constants rather than in a channel someone has to remember reading.
+
+### Two operands of one comparison, and why layout decides who finds it
+
+⭐ commonplace-merkle-crdt found a defect that a per-row audit passes cleanly: NOT two rows
+sharing a measurement, but ONE ROW WHOSE TWO OPERANDS ARE DRAWN FROM DIFFERENT POPULATIONS. Its
+`source_arms` globbed `test/*.exs` NON-recursively while `executed` came from `mix test`, which
+runs `test/**/*_test.exs`. The two agreed at 331 == 331 only because its repo happens to have no
+test subdirectory. ⇒ THE EQUALITY WAS LUCK OF LAYOUT, NOT CONSTRUCTION, and the first nested test
+anyone added would have been counted on one side and not the other -- silently, toward the branch
+that never refuses.
+
+✅ CHECKED HERE. `check-plan-arms.sh:162` uses `grep -rho ... test/` -- RECURSIVE -- and its
+executed side reads the names the run actually emitted. Populations match.
+
+⭐⭐ AND THE INVERSION IS WORTH MORE THAN THE CHECK, BECAUSE IT EXPLAINS WHO FINDS THIS CLASS:
+
+    merkle-crdt   ALL tests at depth 1   -> a non-recursive glob reads CORRECTLY. INVISIBLE.
+    this repo     ALL tests at depth 2   -> a non-recursive glob reads 0 of 15. DEAFENING.
+
+⇒ THE SAME DEFECT IS SILENT OR SCREAMING DEPENDING ON A LAYOUT PROPERTY NEITHER DOOR CHOSE. This
+door would have caught it on the first run and never learned the lesson; merkle carried it
+undetected and found it only by auditing a gate that was passing. ⭐ That is the sharpest form of
+"safe by accident and safe by construction wear the same green" this file has recorded -- here
+the accident runs the other way, and being *unable* to have the bug is not the same as having
+guarded against it.
+⚠️ Which is also the honest reading of most green rows in this file: several are properties of
+this repo's shape (no exclusions configured, no `System.get_env` in `test/`, tests nested two
+deep) rather than of anything its author decided.
