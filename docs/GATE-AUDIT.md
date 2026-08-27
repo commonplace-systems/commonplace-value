@@ -540,3 +540,17 @@ precisely because it was the most dramatic version. It reached this file too, ab
 ⚠️ My own datum's limit, stated: my landing ran a GREEN verdict suite and then a traced suite
 KILLED mid-flight. A SIGTERM'd run most likely writes nothing, so the green one is the PROBABLE
 author of the 19:02:45 marker -- probable, not established.
+
+⛔ AND THE "LAST RUN ONLY" BOUND -- which several doors filed and this file did not -- IS FALSE.
+commonplace-yelixer holds the decisive case: three sequential PARTIAL runs (2 failures, then 5,
+then a GREEN one) left a marker stamped with the GREEN run's completion and holding arity 7 =
+2 + 5 + 0. ⇒ THE MANIFEST MERGES ACROSS INVOCATIONS. It did not reset to `{1, %{}}` and it did
+not overwrite with the last run's own empty set -- which is the only way `mix test --failed`
+could work after you run a single file.
+⇒ ⭐⭐ MTIME AND CONTENTS HAVE DIFFERENT SUBJECTS: the mtime is ONE run, the contents are MANY.
+commonplace-markdown said this of its own file first; yelixer's case shows it is general.
+⚠️ AND IT GIVES A LARGE-MARKER-ON-A-GREEN-RUN A SECOND CAUSE: markdown's was 41 EXCLUDED tests;
+yelixer's had NO exclusions at all and accumulated across partial runs. Anyone reading size as
+outcome now has two independent ways to be wrong.
+⚠️ yelixer's own bound, carried: established for PARTIAL runs; whether a FULL-SUITE run RESETS
+the manifest rather than merging is UNTESTED.
