@@ -178,14 +178,29 @@ capture_executed() { # capture_executed <names-file> <test-command...>
       echo "REFUSED: the complete verdict run is kept at $verdict_file" >&2
       return 69 ;;
   esac
+  # ── 2. THE NAMES RUN: traced. Also the DISCRIMINATOR when the plain run failed. ──
+  # ⛔ DO NOT RETURN EARLY ON A PLAIN FAILURE. The obvious implementation short-circuits
+  # on the first red -- and then commonplace-log's discriminator (plain fails + traced
+  # passes ⇒ timing-or-concurrency class) is UNREACHABLE BY CONSTRUCTION. commonplace-cell
+  # hit exactly that in its own first cut. ⭐ Asking the second run the same question turns
+  # it from a cost into the thing that IDENTIFIES the class.
+  trace_file=$(mktemp); CLEANUP_FILES+=("$trace_file")
+  "$@" --trace >"$trace_file" 2>&1 || trace_rc=$?
+
   if [ "$rc" -ne 0 ]; then
-    echo "REFUSED: the complete verdict run is kept at $verdict_file" >&2
+    if [ "$trace_rc" -eq 0 ]; then
+      echo "REFUSED: plain mix test FAILED (rc=$rc) but --trace PASSED." >&2
+      echo "         ⇒ TIMING-OR-CONCURRENCY CLASS, not a flake. --trace disables per-test" >&2
+      echo "           timeouts (ex_unit runner.ex:564, unconditional) and forces" >&2
+      echo "           --max-cases 1. DO NOT RETRY THIS AWAY -- the disagreement IS the signal." >&2
+    else
+      echo "REFUSED: plain mix test FAILED (rc=$rc) and --trace ALSO failed (rc=$trace_rc)." >&2
+      echo "         ⇒ NOT the trace class. An ordinary failure; read the verdict run." >&2
+    fi
+    echo "REFUSED: verdict run kept at $verdict_file ; traced run kept at $trace_file" >&2
     return "$rc"
   fi
 
-  # ── 2. THE NAMES RUN: traced, for the executed population. Must ALSO pass. ──
-  trace_file=$(mktemp); CLEANUP_FILES+=("$trace_file")
-  "$@" --trace >"$trace_file" 2>&1 || trace_rc=$?
   if [ "$trace_rc" -ne 0 ]; then
     echo "$trace_file" | tail -20 >&2
     echo "REFUSED: the traced names run failed (rc=$trace_rc) after the verdict run passed." >&2
