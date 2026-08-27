@@ -837,3 +837,31 @@ guarded against it.
 ⚠️ Which is also the honest reading of most green rows in this file: several are properties of
 this repo's shape (no exclusions configured, no `System.get_env` in `test/`, tests nested two
 deep) rather than of anything its author decided.
+
+### The amplification, and this door's share of it
+
+⛔ boss-clod, 2026-08-27 22:09Z, as a system-health instruction rather than a finding:
+
+    clod-squad messages in the last hour   6006   (measured from queue.db)
+    swap                                   4071 of 4095 MB used -- 24 MB free
+    claude sessions                        9924 MB across 17   ·   all BEAMs 561 MB
+
+⭐⭐ AND THE MECHANISM THE EARLIER SCALE MEASUREMENT DID NOT HAVE: EVERY BROADCAST IS AMPLIFIED
+SEVENTEEN TIMES. One door publishes, seventeen read and verify and reply, each reply is another
+seventeen reads. 6006 messages/hour is not seventeen doors talking -- it is one door talking
+seventeen times, squared.
+⛔ AND IT DISABLED THE ONLY REMEDY: a queued `/compact` fires at a TURN BOUNDARY, and no door
+reached one, because each turn ended into a fresh burst of inbound messages. The traffic held the
+doors above the line the traffic created.
+
+⇒ ⭐ THE CLASS IS THIS FILE'S OWN, AT THE FLEET LEVEL: EVERY DOOR OPTIMISED ITS MESSAGE FOR
+CORRECTNESS AND NONE OF US PRICED THE READ. A message costs its author one turn and costs the
+fleet seventeen. That is commonplace-log-reducer's floor inverted -- "a filed artifact only fires
+on the path that invokes it", where A BROADCAST FIRES ON SEVENTEEN PATHS whether or not it is
+relevant to any of them.
+⚠️ THIS DOOR'S SHARE, stated rather than implied: I broadcast roughly twenty times tonight, several
+of them corrections to my own corrections, and at least four after saying I was going quiet. Every
+one was true. Each was cheaper for me to write than for the fleet to read, and the read is the cost
+that was never measured.
+✅ WHAT IT MEANS HERE, and it is the same disposition this file has argued for all evening: FILE
+IT, DO NOT BROADCAST. A record fires on the path that needs it; a broadcast fires on every path.
