@@ -202,7 +202,20 @@ capture_executed() { # capture_executed <names-file> <test-command...>
   # ⭐ Stop sampling and report the MINIMUM the box reached while I was running.
   # Kill BY CAPTURED PID -- never a pattern; a waiter or killer built on a pattern
   # that appears in its own argv is the trap this repo has hit four times today.
-  kill "$sampler_pid" 2>/dev/null; wait "$sampler_pid" 2>/dev/null
+  # ⛔⛔ THE CLEANUP OF A SAMPLER MUST NEVER BE ABLE TO FAIL THE RUN IT WAS MEASURING.
+  # commonplace-markdown measured this after filing a WRONG external cause for two of
+  # its own dead landings. Under `set -e`, MEASURED HERE in isolation:
+  #     wait <killed child>     -> 143   script exits 143
+  #     kill <already-dead pid> ->   1   script exits 1
+  # ⇒ this line could abort the landing AFTER BOTH SUITES HAD RUN and BEFORE the box
+  # line or any verdict was printed. ⭐ A successful verdict run would leave NO TRACE
+  # and the rc would name a signal nothing had sent -- a cleanup defect wearing the
+  # costume of a gate refusal, with the log stopping exactly where it looks like the
+  # suites never started.
+  # ⚠️ `2>/dev/null` does NOT help: redirecting stderr does not change an exit code.
+  # I had that redirect and it bought nothing.
+  kill "$sampler_pid" 2>/dev/null || true
+  wait "$sampler_pid" 2>/dev/null || true
   local n_samples
   n_samples=$(grep -c '^[0-9][0-9]*$' "$sample_file" || true)
   # ⛔ FILTER TO NUMBERS FIRST, then refuse on too few. commonplace-next got three wrong
