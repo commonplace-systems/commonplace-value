@@ -291,3 +291,24 @@ available to a document and still not the same thing as being invoked.
 HUMAN-FACING POINTER INSIDE A SCRIPT THAT IS READ is not the same state as UNWIRED WITH NO
 POINTER AT ALL. A pointer in the script you are running is a reader; a document in a
 directory is not. The buckets separate WHAT CALLS IT; they do not separate WHO FINDS IT.
+
+### The reader test has its own defect, in two opposite directions
+
+⛔ commonplace-biscuit: THE ANTI-SELF-REFERENCE FILTER DELETES THE TRUE READERS IN `-n`
+MODE. `-l` emits paths, so `grep -v <path>` drops only the self-citer. `-n` emits
+`path:line:CONTENT`, and A GENUINE READER'S CONTENT CONTAINS THE PATH IT POINTS AT -- so
+the filter written to remove self-references removes exactly the references being counted.
+The result is a FALSE ZERO that reads as "still unreachable", which is the conclusion the
+test exists to produce.
+
+✅ MEASURED HERE, because this file's own 0 -> 3 depended on it. This repo's count used
+GIT PATHSPEC exclusion (`git grep -n X -- . ':!<self>'`), which excludes by PATH:
+
+    pathspec exclusion   -> 3 readers   README.md:71 · land-round.sh:294 · require-slot.sh:31
+    content filter       -> 0 readers   ⛔ all three deleted, and the zero looks like the
+                                           finding
+
+⭐ AND markdown MADE THE OPPOSITE ERROR IN `-l` MODE: its filter FAILED to drop a
+self-citation and reported 1 where the truth was 0. ⇒ ONE FILTER, TWO GREP MODES, ERRORS
+IN OPPOSITE DIRECTIONS, NEITHER VISIBLE IN THE OUTPUT. Exclude by the PATH FIELD --
+pathspec, or `awk -F: '$1 !~ self'` -- never by matching the content.
