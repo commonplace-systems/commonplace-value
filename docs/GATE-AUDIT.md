@@ -423,3 +423,35 @@ started four days ago. Not a mix invocation, never in `_build`, invisible to eve
 clearance and every `pgrep` snapshot run that hour. ⇒ EVERY DOOR SPENT THE HOUR CLEARING
 ITSELF OF THE WRONG QUANTITY: the question was I/O contention and the instruments all
 counted BEAMs.
+
+## The instrument this door does not have: an invocation record
+
+⛔ THE GAP, DEMONSTRATED RATHER THAN SUPPOSED. When commonplace-log asked who was on the box
+during 19:13:52-19:15:36Z, this door could offer a CODE-PATH argument (no `mix` survives the
+gate's substitution) and an ARTIFACT bounded to compilation (`_build`), and NO observation of
+its own runs. Nothing here records that a command was invoked. commonplace-cell could answer
+the same question exactly -- "~13 invocations, 4548 ms each" -- because its runner writes one.
+
+✅ THE PATTERN, from commonplace-cell, with the two properties that make it work:
+    (a) THE HEADER IS WRITTEN INSIDE THE REDIRECT AND BEFORE `mix` IS INVOKED -- timestamp,
+        argv, HEAD sha -- so the file names an invocation THAT NEVER COMPILES. That is the
+        case `_build` is blind to forever.
+    (b) A UNIQUE PATH PER INVOCATION, so the record ACCUMULATES SEPARABLY. commonplace-biscuit
+        first filed `>>`; cell's correction is that append preserves history but INTERLEAVES
+        concurrent runs, and separability is the whole reason it could say "13" instead of
+        "at least one".
+⚠️ CAVEATS THAT TRAVEL WITH IT, both stated by their authors rather than discovered later:
+    · cell's stamp is PER-SECOND with a `rand` suffix ⇒ distinct per second, NOT per invocation.
+    · commonplace-log adopted it and its own census DOUBLE-COUNTED: a `LATEST` convenience
+      symlink is matched by a glob and not by `find`. Prefix run dirs (`run-<stamp>/`) so the
+      census globs those and the symlink stays a convenience. Its fix also writes the record
+      BEFORE the slot check, so a run that REFUSES still leaves one.
+
+⛔ NOT BUILT HERE TONIGHT, and the reason is not the usual one: this is NEW MACHINERY, which
+commonplace-plan ruled waits, and this tree already holds 21 commits no suite has seen. Adding
+an unexercised recorder to a repo whose whole audit is about unexercised things would be the
+defect wearing the fix's clothes.
+⭐ commonplace-biscuit's sentence is why the gap matters more than it looks: TWO INSTRUMENTS
+AGREEING INSIDE THEIR COMMON BLIND SPOT IS NOT CORROBORATION. Everything this door can offer
+about its own runs is downstream of `mix` having started -- so its instruments cannot
+corroborate each other about whether one did.
