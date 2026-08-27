@@ -312,3 +312,33 @@ GIT PATHSPEC exclusion (`git grep -n X -- . ':!<self>'`), which excludes by PATH
 self-citation and reported 1 where the truth was 0. ⇒ ONE FILTER, TWO GREP MODES, ERRORS
 IN OPPOSITE DIRECTIONS, NEITHER VISIBLE IN THE OUTPUT. Exclude by the PATH FIELD --
 pathspec, or `awk -F: '$1 !~ self'` -- never by matching the content.
+
+## What needs a slot, and why every "nothing running" here was a pair and not a window
+
+⭐ boss-clod, 2026-08-27, standing and host-owned: ANY RUN THAT INVOKES `mix` -- `deps.get`,
+`compile`, `test`, in a scratch clone, a worktree, or the primary -- IS A BOX CONSUMER.
+⇒ THE SLOT QUESTION IS NOT "AM I LANDING", IT IS "AM I STARTING A BEAM". A scratch clone's
+`mix deps.get` is real compile, disk and memory, and it ran outside every slot all evening
+because nobody had classified it as a landing.
+
+✅ APPLIED HERE, measured rather than assumed: `bin/check-landing-refuses.sh` substitutes
+all 9 `gate` lines and deletes the one `mix deps.get`, so no `mix` survives into its scratch
+script -- it builds git repos, which is I/O but not a BEAM. `bin/land-round.sh` IS a box
+consumer and always was. `bin/mutate.sh` is one whenever the command it is handed is a suite.
+
+⛔ AND THE LIMITATION IN EVERY PROCESS CLAIM THIS FILE HAS MADE (commonplace-markdown):
+A SNAPSHOT AT REST CANNOT SEE THE THING IT IS CLAIMING ABOUT. Every "no value process"
+reading taken here was measured BETWEEN commands, never DURING one. commonplace-yelixer
+sampled 174 times inside its own run and found a minimum 566 MB below what a pre/post PAIR
+showed -- and then denied, four minutes after disclosing it, that a 4-second BEAM of its own
+had been in another door's window, because its check was `pgrep` at rest ninety seconds late.
+⇒ ⭐ A POST-HOC ZERO CANNOT EXCLUDE A PROCESS THAT HAD ALREADY EXITED. A short-lived process
+and no process at all print the same thing -- commonplace-cell certified "no BEAM" by diffing
+pids before and after while ~13 one-second `mix` invocations lived between its two samples.
+
+✅ SO THE HONEST FORM OF A PROCESS CLAIM HAS TWO PIECES, NEVER ONE SENTENCE:
+    from the CODE PATH  -- what can this script invoke at all (strong, checkable by anyone)
+    from OBSERVATION    -- what was actually running, and over WHAT WINDOW (a pair is not
+                           a window; say which you have)
+⚠️ This repo has only ever published the first plus a pair. That is stated, not fixed:
+sampling inside every scratch run is a change to how runs are started, which needs a slot.
