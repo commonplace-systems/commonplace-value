@@ -568,7 +568,12 @@ population, so both accounts predict 41 and its tree cannot separate them BY CON
 
 ✅ AND THE CATEGORY QUESTION IS NOW SETTLED FROM SOURCE, NOT FROM CASES -- commonplace-merkle-crdt
 read `ex_unit/lib/ex_unit/failures_manifest.ex`, and I verified it against THIS box's own install
-(Elixir 1.18.4-otp-27, matching `.tool-versions`):
+(Elixir 1.18.4-otp-27, matching `.tool-versions`) -- INCLUDING the link commonplace-doc pointed
+out that everyone had assumed: `asdf which elixir` ->
+`/home/jes/.asdf/installs/elixir/1.18.4-otp-27/bin/elixir`, the same tree the source was read
+from. ⭐ Doors agreeing about a file establishes only that neither misread it; that the file is
+the one which WROTE the marker is a separate claim, and it rests on shim resolution nobody had
+measured. Measured here.
 
     put_test(manifest, %Test{state: {ignored, _}}) when ignored in [:skipped, :excluded]
       -> manifest                             ⛔ EXCLUDED AND SKIPPED ARE NEVER ADDED
