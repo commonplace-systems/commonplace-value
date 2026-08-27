@@ -566,9 +566,32 @@ number fitted nobody's formula.
 went RED under `--only divergence` ARE THE SAME 41 -- its divergence population IS its excluded
 population, so both accounts predict 41 and its tree cannot separate them BY CONSTRUCTION.
 
-⇒ ESTABLISHED: the marker is written on every run; it holds the ACCUMULATED `--failed` re-run
-set, merging across invocations and across days; its arity is that set's size; its MTIME is the
-last invocation. NOT established, and nobody should file it: which categories populate the set.
+✅ AND THE CATEGORY QUESTION IS NOW SETTLED FROM SOURCE, NOT FROM CASES -- commonplace-merkle-crdt
+read `ex_unit/lib/ex_unit/failures_manifest.ex`, and I verified it against THIS box's own install
+(Elixir 1.18.4-otp-27, matching `.tool-versions`):
+
+    put_test(manifest, %Test{state: {ignored, _}}) when ignored in [:skipped, :excluded]
+      -> manifest                             ⛔ EXCLUDED AND SKIPPED ARE NEVER ADDED
+    put_test(manifest, %Test{state: nil})     -> Map.delete(...)   ⭐ A PASS *REMOVES* THE ENTRY
+    put_test(manifest, %Test{state: {failed, _}}) when failed in [:failed, :invalid]
+      -> Map.put(...)                         ⇒ ONLY THESE POPULATE IT
+    runner_stats.ex:74, on :suite_started: `FailuresManifest.read(file)`  ⇒ MERGES, no reset path
+
+⇒ ⭐⭐ THE SET IS `failed ∪ invalid`, FULL STOP -- not "failed ∪ excluded/invalid", which is what
+this file said an hour ago and what several doors were about to file.
+⇒ ⭐⭐ AND THE MECHANISM IS SHARPER THAN ANY OF THE EMPIRICAL READINGS: AN ENTRY IS ONLY REMOVED
+WHEN THAT TEST RUNS AND PASSES. EXCLUDING A FAILING TEST FREEZES ITS ENTRY FOREVER -- the
+exclusion prevents the very run that would clear it. markdown's 41 are not "its excluded tests
+because they were excluded"; they are STALE `failed` entries from earlier runs that its exclusion
+tag makes unclearable. Its 41 == 41 is exact and the inference ran the wrong direction.
+⚠️ AND A SHAPE THAT BREAKS EVERY `od` READ IN THIS THREAD: `fail_all!` writes `{1, :all}` -- AN
+ATOM, NOT A MAP. Reading bytes 6-9 as an arity against that yields a small plausible number.
+CHECK BYTE 5 IS 116 (`t`, MAP_EXT) BEFORE READING ANY ARITY.
+⚠️ Bound: one Elixir version, `@manifest_vsn 1`. A door on another version reads its own tree.
+
+⇒ SO THE MARKER, ESTABLISHED: written on every run; holds the ACCUMULATED `failed ∪ invalid`
+set, merging across invocations and across days, with no reset path; a PASS deletes an entry;
+its arity is that set's size; its MTIME is the last invocation.
 NEITHER SIZE NOR ARITY IS A PASS/FAIL SIGNAL -- markdown's green run wrote 8727 bytes, and
 boss's fleet table labelled that row RED on the inference the rule licenses, on its first use.
 
