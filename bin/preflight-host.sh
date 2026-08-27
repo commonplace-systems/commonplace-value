@@ -63,15 +63,26 @@ fi
 # string I also typed, and the FIRST that pointed toward false alarm rather than
 # false comfort.
 # ✅ Enumerate by comm, then confirm with a kernel fact the shell cannot fake.
-SERVE_PEAK_MB=2768   # its observed high-water mark tonight
-serve_rss=0; serve_pid=""
+# ⭐ USE VmHWM, NOT THE HIGHEST SAMPLE ANYONE HAPPENED TO CATCH -- commonplace-biscuit.
+# 2768 was a READING; VmHWM is a kernel-maintained HIGH-WATER MARK that only moves
+# up. ⇒ the pessimistic figure stops depending on who was looking when the serve
+# peaked, and is slightly more conservative. A PROPERTY rather than a sample.
+# The constant remains only as a floor for the case where VmHWM cannot be read.
+SERVE_PEAK_FALLBACK_MB=2768
+serve_rss=0; serve_pid=""; serve_hwm=0
 for p in $(pgrep -x beam.smp); do
   case "$(readlink "/proc/$p/cwd" 2>/dev/null)" in
-    *commonplace-serve-pin) serve_pid=$p; serve_rss=$(awk '/VmRSS/{print int($2/1024)}' "/proc/$p/status" 2>/dev/null) ;;
+    *commonplace-serve-pin)
+      serve_pid=$p
+      serve_rss=$(awk '/VmRSS/{print int($2/1024)}' "/proc/$p/status" 2>/dev/null)
+      serve_hwm=$(awk '/VmHWM/{print int($2/1024)}' "/proc/$p/status" 2>/dev/null)
+      ;;
   esac
 done
 if [ -n "$serve_pid" ]; then
-  pessimistic=$((available - (SERVE_PEAK_MB - serve_rss)))
+  peak=${serve_hwm:-0}
+  [ "$peak" -lt "$SERVE_PEAK_FALLBACK_MB" ] && peak=$SERVE_PEAK_FALLBACK_MB
+  pessimistic=$((available - (peak - serve_rss)))
 else
   pessimistic=$available
 fi
@@ -79,7 +90,8 @@ fi
 echo "  available MB : $available   (danger < $DANGER_AVAILABLE_MB)"
 if [ -n "$serve_pid" ]; then
   echo "  serve rss MB : $serve_rss   (pid $serve_pid, by comm+cwd -- never by pattern)"
-  echo "  PESSIMISTIC  : $pessimistic   <- headroom if the serve faults back to ${SERVE_PEAK_MB}MB"
+  echo "  serve VmHWM  : ${serve_hwm}MB   (kernel high-water mark -- only moves up)"
+  echo "  PESSIMISTIC  : $pessimistic   <- headroom if the serve faults back to ${peak}MB"
 else
   echo "  serve rss MB : NOT FOUND -- pessimistic figure unavailable, treating available as-is"
 fi
