@@ -55,10 +55,21 @@ fi
 echo "  ⚠️ $BOSS_HEALTH not found -- falling back to this repo's local copy."
 echo "     Its numbers may have drifted from the owner's. Prefer the owner's tool."
 
-DANGER_AVAILABLE_MB=2500   # boss-clod's figure. Was 1500 here -- drift, corrected.
+# ⛔⛔ GATE ON WHAT THE RUN NEEDS, REPORT THE RESERVE AS INFORMATION -- doc-sync's
+# split, adopted by boss-clod after his 2500 floor proved UNREACHABLE. Reporting and
+# gating are different jobs and one number was doing both.
+# ⚠️ MY FALLBACK HAD THE UNREACHABLE FORM AND I ONLY FOUND IT BY TESTING IT:
+#     best available seen 4429 - reserve (VmHWM 2854 - rss ~350) = 1925 achievable
+#     my floor                                                   = 2500
+# ⇒ it could never go green. AND IT LIVES IN THE PATH THAT ONLY RUNS WHEN THE
+# OWNER'S TOOL IS BROKEN, so it would never be exercised on a normal day and would
+# refuse forever exactly when it is the only instrument left.
+FLOOR_MB=1500        # what must remain after a suite
+SUITE_COST_MB=500    # what one suite here costs
 CROWDED_LOAD1=30           # crowded, NOT dangerous: only timing-sensitive results suffer.
 
 available=$(awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo)
+MEMTOTAL_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
 load1=$(cut -d' ' -f1 /proc/loadavg)
 [ -n "$available" ] || { echo "INSTRUMENT BLIND: no MemAvailable in /proc/meminfo" >&2; exit 2; }
 
@@ -133,7 +144,7 @@ else
   pessimistic=$available
 fi
 
-echo "  available MB : $available   (danger < $DANGER_AVAILABLE_MB)"
+echo "  available MB : $available   (need > $((FLOOR_MB + SUITE_COST_MB)) to seat a ${SUITE_COST_MB}MB suite)"
 if [ -n "$serve_pid" ]; then
   echo "  serve rss MB : $serve_rss   (pid $serve_pid, by comm+cwd -- never by pattern)"
   # ⛔⛔ VmHWM IS MONOTONIC AND THAT MAKES IT A RATCHET -- commonplace, correcting
@@ -164,13 +175,27 @@ echo "  BEAMs        : $beams   <- the control: proof the instrument can see any
 # neighbours.
 echo "  (suites is a FLOOR: a suite that has not yet spawned its BEAM is real load and not counted)"
 
-if [ "$pessimistic" -lt "$DANGER_AVAILABLE_MB" ]; then
-  echo "VERDICT: DO NOT START -- pessimistic headroom ${pessimistic}MB is below ${DANGER_AVAILABLE_MB}MB," >&2
-  echo "         even though available reads ${available}MB. The serve can take the difference back." >&2
-  echo "VERDICT: DO NOT START -- pessimistic headroom ${pessimistic}MB is below ${DANGER_AVAILABLE_MB}MB."
+# ⭐⭐ REACHABILITY SELF-CHECK, AND IT MUST TEST THE CRITERION ACTUALLY GATED ON.
+# commonplace-log's self-check tested a STRICTER criterion than the one it guarded
+# (it still subtracted the reserve after the gate had stopped doing so) and produced
+# a FALSE REFUSAL -- which nearly stood, because four true unreachable-gate findings
+# had just been published and "confirmed at a fifth door" was the expected shape.
+# ⛔ A RED THAT AGREES WITH A TRUE FINDING SOMEONE ELSE JUST PUBLISHED IS THE HARDEST
+# KIND TO DOUBT, and a spurious refusal fails silently in the safe direction.
+# ⇒ So this tests `available - SUITE_COST > FLOOR`, the exact expression below.
+if [ $((MEMTOTAL_MB - SUITE_COST_MB)) -le "$FLOOR_MB" ]; then
+  echo "VERDICT: BLIND -- UNREACHABLE CRITERION: FLOOR($FLOOR_MB) + SUITE_COST($SUITE_COST_MB)" >&2
+  echo "         >= MemTotal($MEMTOTAL_MB). This gate can never go green." >&2
+  exit 2
+fi
+
+if [ $((available - SUITE_COST_MB)) -le "$FLOOR_MB" ]; then
+  echo "VERDICT: DO NOT START -- ${available}MB available leaves $((available - SUITE_COST_MB))MB" >&2
+  echo "         after a ${SUITE_COST_MB}MB suite, at or below the ${FLOOR_MB}MB floor." >&2
+  echo "VERDICT: DO NOT START -- would leave $((available - SUITE_COST_MB))MB, floor ${FLOOR_MB}MB."
   exit 1
 fi
-if [ "$available" -lt "$DANGER_AVAILABLE_MB" ]; then
+if false; then
   echo "VERDICT: DO NOT START -- available ${available}MB is below the ${DANGER_AVAILABLE_MB}MB danger line." >&2
   echo "VERDICT: DO NOT START -- available ${available}MB is below the ${DANGER_AVAILABLE_MB}MB danger line."
   exit 1
