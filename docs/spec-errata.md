@@ -781,3 +781,36 @@ without being remembered; the wrapper it BUILT to make a step unskippable was sk
 its own author on the one landing since. ⇒ A WIRED MECHANISM WORKS WHILE NOBODY IS
 THINKING ABOUT IT. That is the entire property, and no amount of recording substitutes
 for it -- which is why bucket 4 rows are recorded as gaps and not counted as coverage.
+
+## V19 — a guard's reachability depends on where the PRIMARY checkout is standing
+
+⭐ commonplace-markdown found a fifth face of the night's mechanism: A GUARD THAT IS TRUE
+OF A REACHABLE STATE AND WAS NEVER REACHABLE -- a DEAD ARM, not a demonstrated one. Its
+`64x2` collision was theoretical because one of the two arms cannot fire: `git rev-parse
+--git-dir` returns `.git` only in the primary checkout, so the worktree guard needs a
+linked worktree holding `main`, and git refuses a second checkout of a branch.
+
+⛔ I ALMOST TRANSFERRED THAT RESULT TO MY OWN `64x2`. It does not transfer. MEASURED HERE:
+
+    linked worktree on a branch   -> rc 64  "on 'probe-dead-arm', not main"   BRANCH guard
+    linked worktree DETACHED      -> rc 64  "on '', not main"                 BRANCH guard
+    linked worktree ON main       -> created fine, then:
+                                    "REFUSED: this is a linked worktree, not the main
+                                     checkout."                               THE GUARD
+
+⭐⭐ GIT REFUSES A SECOND CHECKOUT OF A BRANCH ONLY WHEN SOMETHING ALREADY HOLDS IT. This
+repo's primary checkout stands on a working branch, not on `main` -- so `main` was FREE, a
+linked worktree took it, the branch guard passed, and the worktree guard fired with its own
+text. ⇒ THE SAME GUARD IS DEAD AT ONE DOOR AND LIVE AT ANOTHER, decided entirely by which
+ref the primary checkout happens to be holding at the time -- a property of neither script.
+
+⇒ ⛔ SO MY `64x2` COLLISION IS REAL, NOT THEORETICAL: two reachable guards sharing a code
+on the landing path. Recorded, not renumbered -- renumbering is a landing-path edit and
+needs a slot.
+
+⚠️ AND THE INSTRUMENT DEFECT THAT NEARLY SANK THIS: my first probe ran
+`git worktree add -q "$WT" main || echo "git REFUSES"`. The `||` never fired and printed
+NOTHING, and I read the silence as the refusal I expected. ⭐ A SILENCED SUCCESS AND A
+QUIET FAILURE LOOK IDENTICAL; the `-q` I added for tidiness removed the only evidence.
+✅ Re-run capturing the rc explicitly: rc 0, it succeeded. READ THE CONTROL BEFORE
+BELIEVING THE ALARM -- and never let a `||` branch stand in for a captured exit code.
