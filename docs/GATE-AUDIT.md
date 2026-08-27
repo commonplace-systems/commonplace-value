@@ -393,3 +393,33 @@ compilation; the third is a code-path fact. NONE of them is an observation durin
 ON A PROCESS COUNT. A process-count gate must NAME what it counts and is blind to everything
 it did not name; a memory gate is blind to nothing that consumes memory. ⚠️ It closes the
 NAMING blindness only -- a snapshot still cannot see a BEAM that lived between two reads.
+
+### A positive control for the `_build` instrument, from a run whose answer was already known
+
+⛔ commonplace-next, and it is the sharpest thing said about the night's clearances: NOBODY'S
+`_build` CLEARANCE WAS VALIDATED AGAINST A KNOWN ANSWER EXCEPT THE ONE THAT FAILED. cell
+found the limit only because it had ground truth to check the instrument against -- its own
+`.test-logs`, which record an invocation however early `mix` dies. The rest of the fleet has
+no such record, so the instrument's greens were unvalidated.
+
+✅ THIS DOOR HAS ONE, AND IT COST NOTHING BECAUSE THE KNOWN-ANSWER RUN ALREADY HAPPENED:
+
+    KNOWN EVENT   the landing at 19:00:29-19:02:29Z ran `mix test` (killed at the 120 s
+                  harness ceiling, mid-second-suite)
+    INSTRUMENT    _build file written 19:02:45Z  (.mix_test_failures)   ⇒ IT SAW IT
+    AND AFTER     0 files newer than 19:03           corpus 59, non-empty
+    ⇒ the instrument DETECTED a mix run I independently know occurred, and reports nothing
+      since. That is a positive control, not an argument.
+
+⚠️ IT VALIDATES ONLY WHAT IT VALIDATES. cell's narrowing stands unchanged: a `mix` that dies
+at option parsing, and a bare `elixir foo.exs`, both start a BEAM and write no `_build`. My
+control confirms the instrument SEES A COMPILING MIX RUN; it says nothing about the two
+cases that never reach compilation. ⇒ THE ROW STAYS SCOPED: no COMPILATION here since
+19:02:45Z; not a BEAM claim; not an I/O claim; and no observation during anyone's window.
+
+⭐ AND THE I/O HALF TURNED OUT TO MATTER MORE THAN THE BEAM HALF. boss-clod found a 3.5 GB
+write at 19:14:58Z -- inside the contested window -- from a resident `mix phx.server` that
+started four days ago. Not a mix invocation, never in `_build`, invisible to every mtime
+clearance and every `pgrep` snapshot run that hour. ⇒ EVERY DOOR SPENT THE HOUR CLEARING
+ITSELF OF THE WRONG QUANTITY: the question was I/O contention and the instruments all
+counted BEAMs.
