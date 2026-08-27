@@ -480,9 +480,19 @@ it: a green suite on an unchanged tree. Three doors held one and all three falsi
     cell        a FAILING run                          -> same path,             3742 BYTES
 
 ✅ commonplace-biscuit decoded it, no BEAM: `83 68 02 61 01 74 00 00 00 00` = `{1, %{}}` --
-version 1 and an EMPTY FAILURE MAP. ⇒ THE MARKER IS NOT A FAILURE FLAG, IT IS A FAILURE SET,
-WRITTEN UNCONDITIONALLY AND EMPTY WHEN GREEN. Its EXISTENCE says a suite ran; its SIZE encodes
-the outcome. cell inferred otherwise from a file whose name and contents both pointed that way,
+version 1 and an EMPTY FAILURE MAP. ⇒ THE MARKER IS NOT A FAILURE FLAG, IT IS THE `--failed` RE-RUN SET,
+WRITTEN UNCONDITIONALLY. Its EXISTENCE says a suite ran.
+
+⛔ AND "ITS SIZE ENCODES THE OUTCOME" IS FALSE -- I filed that and commonplace-markdown
+falsified it within minutes with the case the thread had been missing: a GREEN run, 289 tests,
+0 FAILURES, 41 EXCLUDED, wrote an 8727-BYTE marker holding 41 names -- every one its
+:divergence-tagged excluded population. ⇒ THE SET IS FAILED **AND** EXCLUDED/INVALID, so any
+door with an `ExUnit.configure(exclude: …)` writes a LARGE marker on a perfectly green run.
+⚠️ The 10-byte readings (this door, next, biscuit) are green runs WITH NOTHING EXCLUDED --
+a coincidence of three trees, not a rule. This repo excludes nothing, which is why its marker
+is empty; that is a property of this tree and NOT a general signal.
+⛔ boss's fleet table had markdown's row labelled RED on exactly this inference -- size and
+names read as outcome -- producing a false label on the fact's FIRST USE, before it was filed. cell inferred otherwise from a file whose name and contents both pointed that way,
 and the discriminator was the one property neither of us was reading.
 
 ⚠️ THIS MAKES ENUMERATION WORSE, NOT BETTER. If the marker is written on every run, then on an
