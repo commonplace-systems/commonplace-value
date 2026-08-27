@@ -699,3 +699,34 @@ below the branch guard, exercising the slot gate costs a full landing window. AB
 the gate refuses in milliseconds -- no suite, no box, no queue. ⇒ HOISTING DOES NOT ONLY
 MAKE THE GATE REACHABLE, IT MAKES ITS RED ARM AFFORDABLE, and an arm nobody can afford to
 run is an arm nobody has seen fail.
+
+## V18 — "present, proven and unwired" needs a fourth bucket, and my sweep for it was contaminated
+
+⭐ commonplace-next's third state: an artifact can be PRESENT, its arms DEMONSTRATED, and
+NOTHING INVOKES IT. It greps greener than absent or unreachable, because the file is there
+and its arms are red-tested. It found one at its own door -- a detached-run helper that
+survives the foreground ceiling, referenced twice, both hits self-referential.
+
+⛔ MY FIRST SWEEP FOR IT WAS WRONG IN THE SAME WAY, TWICE. Matching the bare basename
+across `bin/` reported `check-plan-arms.sh` wired by `check-acceptance-arms.sh:18` and
+`mutate.sh` wired by `check-landing-refuses.sh:46` -- BOTH ARE COMMENTS. A mention is not
+a call. The positive control is what exposed it: its first hit for a script I KNEW was
+wired was a comment, which said the instrument was answering about text.
+✅ Re-run against invocation syntax (`bash bin/X`, `$(dirname "$0")/X`), reading paths:
+
+    NOT INVOKED: dispatch-round.sh · pin-in-use.sh · mutate.sh
+
+⚠️ AND NONE OF THE THREE IS next's DEFECT. The bucket it names is real and these are not
+in it:
+    dispatch-round.sh  ENTRY POINT BY DESIGN -- a human runs it; nothing should call it
+    pin-in-use.sh      A MANUAL SAFETY CHECK, documented at STATE.md:297 as "run before
+                       removing a pin worktree". A DISCIPLINE, NOT A MECHANISM, and it
+                       is recorded as one rather than dressed as a gate.
+    mutate.sh          the open gap already recorded: an ungated suite-starter, driven by
+                       hand, deliberately not token-gated (log's scoping rule -- gating a
+                       repository artifact on a scratchpad token breaks every clone).
+
+⇒ ⭐ SO THE SWEEP HAS FOUR OUTCOMES, NOT TWO: wired · unwired-defect · entry-point ·
+documented-manual-step. Collapsing the last two into "unwired" manufactures findings, and
+collapsing them into "fine" hides next's real one. The separator is reading the path and
+asking what the script is FOR -- the same one flag, for the third time tonight.
