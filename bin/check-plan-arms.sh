@@ -180,8 +180,14 @@ TAGGED=$(awk '
   # ⚠ Column-0 is a PROXY, NOT A PARSER: it fails on an indented top-level test
   # module. Detect with:  grep -rn "^[[:space:]]\+defmodule .*Test do" test/
   /^defmodule[[:space:]]/ { modtag=""; pending=""; next }
-  /^[[:space:]]*@moduletag[[:space:]]+:/ { t=$0; sub(/^[[:space:]]*@moduletag[[:space:]]+:/,"",t); sub(/[^A-Za-z0-9_].*$/,"",t); modtag = (modtag=="" ? t : modtag " " t); next }
-  /^[[:space:]]*@tag[[:space:]]+:/ { t=$0; sub(/^[[:space:]]*@tag[[:space:]]+:/,"",t); sub(/[^A-Za-z0-9_].*$/,"",t); pending = (pending=="" ? t : pending " " t); next }
+  # ⛔ BOTH TAG FORMS. ExUnit honours the ATOM form `@moduletag :integration` and
+  # the KEYWORD form `@moduletag integration: true`, and an exclude list matches the
+  # KEY in either. My first pattern required a colon BEFORE the name, so it saw only
+  # the atom form and was silently blind to the keyword one -- the same shape as
+  # commonplace-markdown finding that an upstream inventory matched `@moduletag skip`
+  # but not `@moduletag :skip`. The optional leading colon covers both.
+  /^[[:space:]]*@moduletag[[:space:]]+:?[A-Za-z0-9_]/ { t=$0; sub(/^[[:space:]]*@moduletag[[:space:]]+:?/,"",t); sub(/[^A-Za-z0-9_].*$/,"",t); modtag = (modtag=="" ? t : modtag " " t); next }
+  /^[[:space:]]*@tag[[:space:]]+:?[A-Za-z0-9_]/ { t=$0; sub(/^[[:space:]]*@tag[[:space:]]+:?/,"",t); sub(/[^A-Za-z0-9_].*$/,"",t); pending = (pending=="" ? t : pending " " t); next }
   /^[[:space:]]*test[[:space:]]+"/ {
     n=$0; sub(/^[^"]*"/,"",n); sub(/".*$/,"",n)
     k=split(pending, P, " "); for (i=1; i<=k; i++) print P[i] "\t" n
