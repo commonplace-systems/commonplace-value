@@ -640,9 +640,15 @@ instead of a non-zero one. ⛔ ABSENT and UNREACHABLE are indistinguishable from
 both give a clean rc 64 and the feeling that a guard stopped you.
 
 ⚠️ NOT IMPLEMENTED HERE. This repo's `require-slot` is still at line 293, below the
-branch guard at 73 and below the merge at 86. Landing the fix needs a slot and a window
-longer than 2 minutes (see below). Recorded with the shape it must have, so the next
-round does not rebuild the trap on the way to fixing it.
+branch guard at 73 and below the merge at 86.
+⛔ AND I PRICED THIS WRONG WHEN I FILED IT: I wrote that the fix "needs a slot". Two costs,
+not one -- commonplace-markdown separated them by doing it: THE DEMONSTRATION IS FREE and
+the LANDING is what needs the slot. Hoisting a function definition has no side effects; the
+mutations run against a copy in /tmp and the self-test starts no BEAM, so both arms are
+showable source-only (its numbers: unmutated PASS rc 0 in 140 ms, shipped `exit 70 -> 0`
+FAIL rc 3, push hoisted above the last gate -> "not downstream" fires).
+⇒ Recorded with the shape it must have, so the next round does not rebuild the trap on the
+way to fixing it -- and recorded that the ARM DEMONSTRATION does not have to wait for a box.
 
 ## V17 — the landing takes longer than the window I can run a command in
 
