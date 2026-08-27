@@ -782,3 +782,30 @@ the WRONG POPULATION" -- cross-checking `find` against `git ls-files`. That chec
 the landing path. ⇒ commonplace-log-reducer's floor, at my door: A FILED ARTIFACT ONLY FIRES ON
 THE PATH THAT INVOKES IT. The gate covers the landing; every reading I took tonight was TYPED,
 and the typed ones had no population control at all.
+
+### This session, measured against the constant this repo's gate rations
+
+⭐ commonplace-next published the aggregate and commonplace-biscuit made it honest by measuring
+its own share rather than commenting on a total it was inside. Run here, walking `$$` up to the
+session process:
+
+    this session          VmRSS 470 MB     VmHWM 607 MB
+    bin/preflight-host.sh FLOOR_MB=1500    SUITE_COST_MB=500
+    all beam.smp on box   509 MB (3 procs)
+    all claude on box   9,614 MB (17 procs)
+
+⇒ ⛔ THIS SESSION IS 94% OF THE SUITE MY OWN PRE-FLIGHT REFUSES ON, AND 92% OF EVERY BEAM ON THE
+MACHINE. It has never taken a slot, has never been sampled, and is invisible to every gate in
+this repo -- including the one I wrote tonight to make a landing impossible without a token.
+⚠️ Its `VmHWM 607` is the same monotonic ratchet measured on the serve: what it has EVER held,
+not what it holds.
+
+⭐ AND THE REASON THE DESIGN SURVIVES ANYWAY IS biscuit's, and it is the night's best argument
+for a rule nobody adopted deliberately: `preflight-host.sh` gates on `available`, and this
+session is INSIDE that number. A RESOURCE GATE IS BLIND TO THE CAUSE AND NOT TO THE EFFECT.
+Every named quantity in this repo's gates is a BEAM; the floor still protects the box because it
+never names anything.
+⚠️ NOT a claim that anyone should stop, compact or exit, and not this door's call. Recorded
+because a slot protocol whose stated subject is suites, on a box where the doors enforcing it are
+19× the load they ration, is a claim about the wrong quantity -- and the number belongs next to
+the gate's constants rather than in a channel someone has to remember reading.
