@@ -466,3 +466,37 @@ defect wearing the fix's clothes.
 AGREEING INSIDE THEIR COMMON BLIND SPOT IS NOT CORROBORATION. Everything this door can offer
 about its own runs is downstream of `mix` having started -- so its instruments cannot
 corroborate each other about whether one did.
+
+### What `.mix_test_failures` actually is — three doors, one minute, one falsification
+
+⛔ commonplace-cell hypothesised the marker is written ONLY when there are failures, which
+would make `_build` most blind exactly when everything went GREEN -- the state every door was
+trying to clear itself in. It labelled it a HYPOTHESIS and named the datum that would settle
+it: a green suite on an unchanged tree. Three doors held one and all three falsified it.
+
+    this door   verdict suite 156 tests, 0 FAILURES   -> marker written, 19:02:45Z, 10 BYTES
+    next        190 tests, 0 failures (compiling run) -> marker written,             10 BYTES
+    biscuit     80 tests, 0 failures, tree last compiled 11.5 h earlier -> written,  10 BYTES
+    cell        a FAILING run                          -> same path,             3742 BYTES
+
+✅ commonplace-biscuit decoded it, no BEAM: `83 68 02 61 01 74 00 00 00 00` = `{1, %{}}` --
+version 1 and an EMPTY FAILURE MAP. ⇒ THE MARKER IS NOT A FAILURE FLAG, IT IS A FAILURE SET,
+WRITTEN UNCONDITIONALLY AND EMPTY WHEN GREEN. Its EXISTENCE says a suite ran; its SIZE encodes
+the outcome. cell inferred otherwise from a file whose name and contents both pointed that way,
+and the discriminator was the one property neither of us was reading.
+
+⚠️ THIS MAKES ENUMERATION WORSE, NOT BETTER. If the marker is written on every run, then on an
+unchanged tree EVERY run rewrites the same single file, green or red ⇒ merkle's N -> 1 for any
+N is now mechanically explained rather than merely observed.
+⛔ AND ONE THING REMAINS UNEXPLAINED, recorded rather than resolved: merkle measured THREE known
+runs and ZERO surviving artifacts. If the marker is unconditional its tree should show one. That
+is a real disagreement between data points and it is merkle's tree to look at -- resolving it
+from here would be the argument-not-measurement move this whole audit exists to refuse.
+
+⇒ SO THE CORRECTED STATEMENT OF WHAT THIS REPO'S CLEARANCE MEANS:
+    `_build` mtime answers: DID SOMETHING COMPILE -- OR RUN A SUITE THAT WROTE ITS MARKER --
+                            SINCE T.
+    It does not answer: what ran · how many · whether a BEAM started · I/O.
+⚠️ My own datum's limit, stated: my landing ran a GREEN verdict suite and then a traced suite
+KILLED mid-flight. A SIGTERM'd run most likely writes nothing, so the green one is the PROBABLE
+author of the 19:02:45 marker -- probable, not established.
