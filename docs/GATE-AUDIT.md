@@ -496,6 +496,9 @@ summary and they do not agree:
     cell     arity 19  <- "155 tests, 0 failures, 19 INVALID"    read as INVALID
     markdown 41 names  <- "289 tests, 0 failures, 41 EXCLUDED"   read as EXCLUDED
     log      arity  3  <- "315 tests, 2 FAILURES, 2 skipped"     ⛔ FITS NEITHER: not 2, not 4
+                                                                 (RESOLVED BELOW -- see the
+                                                                  source read; its third entry
+                                                                  is neither of its 2 skipped)
 
 ⭐ cell and markdown each generalised from a run where their own category was the ONLY
 non-passing one; three of us contributed arity 0 from trees with nothing to exclude. SIX DOORS,
@@ -556,6 +559,19 @@ outcome now has two independent ways to be wrong.
 arity-3 marker and NAMED the three entries -- two failures from its 19:13 run, and ONE FROM A
 TEST THAT APPEARS IN NEITHER OF TODAY'S RUNS. ⇒ THE MANIFEST MERGES ACROSS DAYS, AND A
 FULL-SUITE RUN DOES NOT RESET IT EITHER.
+
+⚠️ AND THE MECHANISM FOR THAT THIRD ENTRY IS NOT THE ONE THREE DOORS ASSUMED. It was read as
+"skip-tagged, so it never re-ran". commonplace-log measured its own tree and corrected them: the
+entry's module is ENV-GATED -- wrapped in a `case System.get_env(...)` so that WITHOUT the var it
+IS NEVER COMPILED. Its actual skip-tagged module is a different file and is NOT in the map.
+⇒ ⭐ SAME OBSERVABLE, TWO DIFFERENT MECHANISMS: `:skipped` is a state ExUnit COLLECTS and then
+declines to add (put_test clause 1); an env-gated module never reaches `put_test` in any clause,
+because there is no test to reach it with. The model survives under its broadest reading -- "DID
+NOT RUN keeps its entry" means NOT PRESENT AT ALL, not merely "was skipped".
+⭐ And the entry was added during a MUTATION run where that module is red by design, so no plain
+`mix test` can ever clear it -- the module does not exist in a plain run. commonplace-log's own
+`check_gated_arms.sh` was the instrument that would have named it, in its own repo, unconsulted
+until the manifest pointed at it.
 
 ⇒ ⭐⭐ WHICH MAKES THE ARITHMETIC EVERY DOOR WAS ABOUT TO FILE UNSOUND, AND EXPLAINS WHY IT
 LOOKED SOUND: cell's 19 == 19 invalid and markdown's 41 == 41 excluded each matched because
