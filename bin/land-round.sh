@@ -140,54 +140,66 @@ gate() {  # gate <label> <cmd...>: run, keep the verdict line, stop on non-zero
 # adds one. Same shape as the pipefail finding.
 capture_executed() { # capture_executed <names-file> <test-command...>
   local names_file="$1"; shift
-  local trace_file rc=0
-  trace_file=$(mktemp)
-  "$@" --trace >"$trace_file" 2>&1 || rc=$?
-  # ExUnit rewrites each trace line after timing it, separated by CR; take the
-  # final field so one physical test line stays one name under async output.
-  # `(excluded)` entries are dropped -- the gate consumes the RUN, not the tags.
-  awk -F '\r' '{ print $NF }' "$trace_file" |
-    sed -nE '/^[[:space:]]*\* test .* \([^)]*\) \[L#[0-9]+\]$/ { /\(excluded\) \[L#[0-9]+\]$/d; s/^[[:space:]]*\* test //; s/ \([^)]*\) \[L#[0-9]+\]$//; p; }' > "$names_file"
-  command cat "$trace_file"
+  local verdict_file trace_file rc=0 trace_rc=0 summary
 
-  # ⛔ REFUSE ON ANY EXCLUDED/SKIPPED/INVALID, AND ON AN UNPARSEABLE SUMMARY.
-  # From commonplace-merkle-crdt and commonplace-biscuit: `mix test` EXITS 0 and the
-  # TOTAL DOES NOT MOVE when tests are excluded -- only the `N excluded` clause
-  # changes. So a gate that judges this command by exit code, as this one does, is
-  # blind to the exact defect the arms gate was patched for.
-  # ⚠️ The arms gate already catches it here. This is deliberate defence in depth:
-  # two halves that agree hide the silence of either, which is how the reconciliation
-  # sat inert in this very file for four minutes today.
-  # ⭐ UNPARSEABLE MUST NOT LOOK LIKE CLEAN -- biscuit's point. If the summary line
-  # cannot be found at all, refuse rather than assume a good run.
-  local summary
-  summary=$(grep -oE '[0-9]+ (test|tests|doctest|doctests|property|properties)[^|]*' "$trace_file" | tail -1)
+  # ⛔⛔ TWO RUNS, TWO QUESTIONS -- and this is a CORRECTION, not a design.
+  # Until now this drove the whole verdict from ONE `--trace` run. VERIFIED IN THE
+  # INSTALLED SOURCE at ex_unit/lib/ex_unit/runner.ex:564, unconditional:
+  #     defp get_timeout(config, tags) do
+  #       if config.trace do :infinity else Map.get(tags, :timeout, config.timeout) end
+  # ⇒ under --trace a test CANNOT time out, and an explicit --timeout cannot override
+  # it because the tag is never consulted. --trace also forces --max-cases 1, so a
+  # trace-gated suite never runs CONCURRENTLY either. Two blind classes, not one.
+  # MEASURED HERE, one file, @tag timeout: 100 against Process.sleep(400):
+  #     mix test         -> rc 2, "1 test, 1 failure", ExUnit.TimeoutError
+  #     mix test --trace -> rc 0, "1 test, 0 failures"
+  # ⭐ THE DIAGNOSTIC MODE AND THE GATING MODE ARE NOT THE SAME MODE, AND THE ONE
+  # THAT PRINTS MORE IS THE ONE THAT OBSERVES LESS. Reported by commonplace-log,
+  # which paid for it by using --trace to investigate a FLAKY failure -- choosing the
+  # one mode that could not reproduce it.
+  # ⚠️ This does NOT reintroduce two sources of truth: the runs answer DIFFERENT
+  # questions. Plain decides pass/fail; traced enumerates. Both must pass.
+
+  # ── 1. THE VERDICT RUN: plain, with real timeouts and real concurrency ──────
+  verdict_file=$(mktemp); CLEANUP_FILES+=("$verdict_file")
+  "$@" >"$verdict_file" 2>&1 || rc=$?
+  command cat "$verdict_file"
+
+  summary=$(grep -oE '[0-9]+ (test|tests|doctest|doctests|property|properties)[^|]*' "$verdict_file" | tail -1)
   if [ -z "$summary" ]; then
     echo "REFUSED: could not parse a test summary line; refusing rather than assuming a clean run." >&2
-    echo "REFUSED: the complete run is kept at $trace_file" >&2
+    echo "REFUSED: the complete verdict run is kept at $verdict_file" >&2
     return 69
   fi
   case "$summary" in
     *excluded*|*skipped*|*invalid*)
       echo "REFUSED: the run reported [$summary]. Excluded or skipped tests do not move the" >&2
       echo "         total and do not change the exit code; a declared arm may not have run." >&2
-      echo "REFUSED: the complete run is kept at $trace_file" >&2
+      echo "REFUSED: the complete verdict run is kept at $verdict_file" >&2
       return 69 ;;
   esac
-
-  # ⭐ KEEP THE WHOLE RUN ON FAILURE, DELETE IT ONLY ON A CLEAN PASS.
-  # boss-clod, after commonplace-log captured rc and then discarded everything but
-  # the summary, leaving the failing arm names unrecoverable: A SUMMARY LINE IS A
-  # VERDICT; THE FAILURE BLOCK IS THE EVIDENCE. gate() already prints every failing
-  # test name, but a printed name is not a kept artefact -- and under load a run can
-  # be expensive enough that re-running to recover evidence is the wrong move.
   if [ "$rc" -ne 0 ]; then
-    echo "REFUSED: the complete run is kept at $trace_file" >&2
+    echo "REFUSED: the complete verdict run is kept at $verdict_file" >&2
     return "$rc"
   fi
-  command rm -f -- "$trace_file"
+
+  # ── 2. THE NAMES RUN: traced, for the executed population. Must ALSO pass. ──
+  trace_file=$(mktemp); CLEANUP_FILES+=("$trace_file")
+  "$@" --trace >"$trace_file" 2>&1 || trace_rc=$?
+  if [ "$trace_rc" -ne 0 ]; then
+    echo "$trace_file" | tail -20 >&2
+    echo "REFUSED: the traced names run failed (rc=$trace_rc) after the verdict run passed." >&2
+    echo "REFUSED: the complete traced run is kept at $trace_file" >&2
+    return "$trace_rc"
+  fi
+  # ExUnit rewrites each trace line after timing it, separated by CR; take the
+  # final field so one physical test line stays one name under async output.
+  # `(excluded)` entries are dropped -- the gate consumes the RUN, not the tags.
+  awk -F '\r' '{ print $NF }' "$trace_file" |
+    sed -nE '/^[[:space:]]*\* test .* \([^)]*\) \[L#[0-9]+\]$/ { /\(excluded\) \[L#[0-9]+\]$/d; s/^[[:space:]]*\* test //; s/ \([^)]*\) \[L#[0-9]+\]$//; p; }' > "$names_file"
   return 0
 }
+
 executed_tests=$(mktemp)
 CLEANUP_FILES+=("$executed_tests")   # ⛔ NOT a second trap -- see the cleanup() note above
 gate "mix test" capture_executed "$executed_tests" mix test
