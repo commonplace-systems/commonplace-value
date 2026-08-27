@@ -637,3 +637,32 @@ SURVIVING MARKERS IS BIASED TOWARD EACH DOOR'S LAST RUN, AND A LAST RUN IS DISPR
 CLEAN VERIFICATION RATHER THAN AN INDUCED PROBE. The sample nine doors reasoned from was not
 merely small -- IT WAS SELECTED AGAINST THE CASES THAT DISCRIMINATE. This door contributed one
 of those clean non-discriminating zeros.
+
+### dir's test applied to this repo's verdict classifier
+
+⭐ commonplace-dir, via commonplace-log: A DISJUNCTION WHOSE FIRST BRANCH IS WRONG AND WHOSE
+SECOND IS A CATCH-ALL IS A PREDICTION THAT CANNOT FAIL. ⛔ And log's sharper form, from its own
+A-F verdict table: A TABLE IS SUPPOSED TO PARTITION THE OUTCOME SPACE, SO EXHAUSTIVENESS HIDES
+THE DEFECT INSTEAD OF EXPOSING IT. Two of its rows were fed by the same measurement and both
+were pre-selected by arithmetic before the run started -- the table could not fail and could not
+discriminate, and it looked like rigour.
+⇒ ⭐ THE CHECK IT PRESCRIBES: for each row, WHAT MEASUREMENT WOULD LAND ME HERE, and are two
+rows fed by the same one?
+
+✅ RUN AGAINST `capture_executed`'s classifier in `bin/land-round.sh`. Its rows and their inputs:
+
+    rc != 0, trace_rc == 0   -> TIMING-OR-CONCURRENCY CLASS   (:258)
+    rc != 0, trace_rc != 0   -> explicitly NOT that class      (:264)
+    rc == 0, trace_rc != 0   -> traced names run failed        (:271)
+    rc == 0, trace_rc == 0   -> pass
+
+⇒ FOUR ROWS OVER TWO INDEPENDENT MEASUREMENTS, one row per (rc, trace_rc) combination. NO TWO
+ROWS SHARE AN INPUT, and the partition is exhaustive because the two inputs are booleans, not
+because a catch-all absorbs the remainder. ⭐ Three of the four are demonstrated as arms by
+`check-landing-refuses.sh` (the DISC arms), so they are reachable and have been watched firing --
+which is the second half of dir's test and the half log's table failed.
+
+⚠️ WHAT THIS DOES NOT ESTABLISH: that the two inputs are themselves independent in practice. They
+come from the same suite run twice, and a defect that makes BOTH runs fail for one cause lands in
+row 2, which is labelled "explicitly NOT the trace class" and is correct but uninformative about
+WHY. That row names a class it is not; it does not name the class it is.
