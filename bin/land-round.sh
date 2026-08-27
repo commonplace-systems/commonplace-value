@@ -149,6 +149,32 @@ capture_executed() { # capture_executed <names-file> <test-command...>
   awk -F '\r' '{ print $NF }' "$trace_file" |
     sed -nE '/^[[:space:]]*\* test .* \([^)]*\) \[L#[0-9]+\]$/ { /\(excluded\) \[L#[0-9]+\]$/d; s/^[[:space:]]*\* test //; s/ \([^)]*\) \[L#[0-9]+\]$//; p; }' > "$names_file"
   command cat "$trace_file"
+
+  # ⛔ REFUSE ON ANY EXCLUDED/SKIPPED/INVALID, AND ON AN UNPARSEABLE SUMMARY.
+  # From commonplace-merkle-crdt and commonplace-biscuit: `mix test` EXITS 0 and the
+  # TOTAL DOES NOT MOVE when tests are excluded -- only the `N excluded` clause
+  # changes. So a gate that judges this command by exit code, as this one does, is
+  # blind to the exact defect the arms gate was patched for.
+  # ⚠️ The arms gate already catches it here. This is deliberate defence in depth:
+  # two halves that agree hide the silence of either, which is how the reconciliation
+  # sat inert in this very file for four minutes today.
+  # ⭐ UNPARSEABLE MUST NOT LOOK LIKE CLEAN -- biscuit's point. If the summary line
+  # cannot be found at all, refuse rather than assume a good run.
+  local summary
+  summary=$(grep -oE '[0-9]+ (test|tests|doctest|doctests|property|properties)[^|]*' "$trace_file" | tail -1)
+  if [ -z "$summary" ]; then
+    echo "REFUSED: could not parse a test summary line; refusing rather than assuming a clean run." >&2
+    command rm -f -- "$trace_file"
+    return 69
+  fi
+  case "$summary" in
+    *excluded*|*skipped*|*invalid*)
+      echo "REFUSED: the run reported [$summary]. Excluded or skipped tests do not move the" >&2
+      echo "         total and do not change the exit code; a declared arm may not have run." >&2
+      command rm -f -- "$trace_file"
+      return 69 ;;
+  esac
+
   command rm -f -- "$trace_file"
   return "$rc"
 }

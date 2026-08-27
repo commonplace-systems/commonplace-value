@@ -163,17 +163,39 @@ EXCLUDED_TAGS=$(sed -n 's/^[[:space:]]*ExUnit.configure(exclude:[[:space:]]*\[\(
 # arms while this gate still reported them covered. That is the defect this patch exists to fix,
 # surviving inside the patch. A module-level tag applies until the next `defmodule`.
 TAGGED=$(awk '
-  /^[[:space:]]*defmodule[[:space:]]/ { modtag=""; pending=""; next }
-  /^[[:space:]]*@moduletag[[:space:]]+:/ { t=$0; sub(/^[[:space:]]*@moduletag[[:space:]]+:/,"",t); sub(/[^A-Za-z0-9_].*$/,"",t); modtag=t; next }
-  /^[[:space:]]*@tag[[:space:]]+:/ { t=$0; sub(/^[[:space:]]*@tag[[:space:]]+:/,"",t); sub(/[^A-Za-z0-9_].*$/,"",t); pending=t; next }
+  # REPRODUCED HERE BEFORE FIXING: a nested defmodule plus a real @moduletag gave
+  # "0 marker/tag mismatch(es)" where the un-nested case gave 11, and the silence was
+  # masked because the --executed half still failed the landing -- two halves that
+  # agree hide the silence of either.
+  # ⛔ @tag PERSISTS UNTIL THE NEXT test -- MEASURED by commonplace-markdown, and it is the
+  # OPPOSITE of what the first fleet fix assumed. ExUnit excluded all three of these:
+  #     @tag :p1 / a comment  / test ...   -> EXCLUDED
+  #     @tag :p2 / a def      / test ...   -> EXCLUDED
+  #     @tag :p3 / test ...               -> EXCLUDED
+  # ⇒ clearing a pending tag at a nested defmodule, a comment or a def is a FALSE
+  # NEGATIVE: the arm is excluded and the gate says nothing. I had the nested-clear
+  # line applied for four minutes on the strength of a relay; it is removed here.
+  # Only a COLUMN-0 defmodule ends a scope; only a test line consumes pending tags.
+  # Tags ACCUMULATE -- several may precede one test and ExUnit honours all.
+  # ⚠ Column-0 is a PROXY, NOT A PARSER: it fails on an indented top-level test
+  # module. Detect with:  grep -rn "^[[:space:]]\+defmodule .*Test do" test/
+  /^defmodule[[:space:]]/ { modtag=""; pending=""; next }
+  /^[[:space:]]*@moduletag[[:space:]]+:/ { t=$0; sub(/^[[:space:]]*@moduletag[[:space:]]+:/,"",t); sub(/[^A-Za-z0-9_].*$/,"",t); modtag = (modtag=="" ? t : modtag " " t); next }
+  /^[[:space:]]*@tag[[:space:]]+:/ { t=$0; sub(/^[[:space:]]*@tag[[:space:]]+:/,"",t); sub(/[^A-Za-z0-9_].*$/,"",t); pending = (pending=="" ? t : pending " " t); next }
   /^[[:space:]]*test[[:space:]]+"/ {
     n=$0; sub(/^[^"]*"/,"",n); sub(/".*$/,"",n)
-    if (pending != "") print pending "\t" n
-    if (modtag  != "") print modtag  "\t" n
+    k=split(pending, P, " "); for (i=1; i<=k; i++) print P[i] "\t" n
+    k=split(modtag,  M, " "); for (i=1; i<=k; i++) print M[i] "\t" n
     pending=""; next
   }
-  /^[[:space:]]*$/ { next }
-  { pending="" }
+  # \u26d4 THE CATCH-ALL THAT USED TO LIVE HERE -- `{ pending="" }` -- WAS A THIRD
+  # INSTANCE OF THE SAME DEFECT, and no fleet message named it: both fixes were
+  # framed as being about the defmodule line. It cleared a pending @tag on ANY
+  # unmatched line, so `@tag :x` followed by a `def` lost the tag while ExUnit
+  # still excluded the test. MEASURED HERE: ExUnit reported `3 tests, 0 failures,
+  # 1 excluded` while this gate reported 0 mismatches.
+  # \u2b50 Nothing but a `test` line clears pending. Removing the catch-all is the
+  # whole of it; the blank-line skip went with it because it existed only to feed it.
 ' $(find test -name '*.exs' 2>/dev/null) 2>/dev/null)
 mismatch=0
 for arm in "${ARMS[@]}"; do
