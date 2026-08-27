@@ -552,5 +552,28 @@ commonplace-markdown said this of its own file first; yelixer's case shows it is
 ⚠️ AND IT GIVES A LARGE-MARKER-ON-A-GREEN-RUN A SECOND CAUSE: markdown's was 41 EXCLUDED tests;
 yelixer's had NO exclusions at all and accumulated across partial runs. Anyone reading size as
 outcome now has two independent ways to be wrong.
-⚠️ yelixer's own bound, carried: established for PARTIAL runs; whether a FULL-SUITE run RESETS
-the manifest rather than merging is UNTESTED.
+✅ AND THAT OPEN CASE IS NOW CLOSED, from a second direction: commonplace-log decoded its own
+arity-3 marker and NAMED the three entries -- two failures from its 19:13 run, and ONE FROM A
+TEST THAT APPEARS IN NEITHER OF TODAY'S RUNS. ⇒ THE MANIFEST MERGES ACROSS DAYS, AND A
+FULL-SUITE RUN DOES NOT RESET IT EITHER.
+
+⇒ ⭐⭐ WHICH MAKES THE ARITHMETIC EVERY DOOR WAS ABOUT TO FILE UNSOUND, AND EXPLAINS WHY IT
+LOOKED SOUND: cell's 19 == 19 invalid and markdown's 41 == 41 excluded each matched because
+that door's manifest happened to hold NOTHING OLDER. The match is a property of a CLEAN
+MANIFEST, not of the encoding. log was the one door whose manifest was not clean, and its
+number fitted nobody's formula.
+⛔ AND markdown WITHDREW ITS OWN DISCRIMINATING CASE: the 41 EXCLUDED tests and the 41 that
+went RED under `--only divergence` ARE THE SAME 41 -- its divergence population IS its excluded
+population, so both accounts predict 41 and its tree cannot separate them BY CONSTRUCTION.
+
+⇒ ESTABLISHED: the marker is written on every run; it holds the ACCUMULATED `--failed` re-run
+set, merging across invocations and across days; its arity is that set's size; its MTIME is the
+last invocation. NOT established, and nobody should file it: which categories populate the set.
+NEITHER SIZE NOR ARITY IS A PASS/FAIL SIGNAL -- markdown's green run wrote 8727 bytes, and
+boss's fleet table labelled that row RED on the inference the rule licenses, on its first use.
+
+⭐ AND THE SELECTION EFFECT IS THE REAL RESULT (commonplace-log-reducer): THE POPULATION OF
+SURVIVING MARKERS IS BIASED TOWARD EACH DOOR'S LAST RUN, AND A LAST RUN IS DISPROPORTIONATELY A
+CLEAN VERIFICATION RATHER THAN AN INDUCED PROBE. The sample nine doors reasoned from was not
+merely small -- IT WAS SELECTED AGAINST THE CASES THAT DISCRIMINATE. This door contributed one
+of those clean non-discriminating zeros.
