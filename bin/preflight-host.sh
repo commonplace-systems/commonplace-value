@@ -47,7 +47,42 @@ if [ "$suites" -gt "$beams" ]; then
   exit 2
 fi
 
+# ⛔ THE SERVE OSCILLATES BY MORE THAN THE ENTIRE DANGER MARGIN. Same pid, never
+# restarted, five readings on 2026-08-27: 2605 → 385 → 317 → 2768 → 298 MB. Four
+# reversals, range 2451 MB, driven by nothing the fleet does. ⇒ `available` alone
+# can read GREEN because the serve happened to page OUT and RED because it paged
+# IN. boss-clod's revised criterion judges on the PESSIMISTIC figure: the headroom
+# left if it faults its pages back mid-run, which it did once inside fourteen
+# minutes.
+#
+# ⛔⛔ AND THE OBVIOUS LOOKUP SELF-MATCHES. `pgrep -f commonplace-serve-pin`
+# returned MY OWN SHELL (comm=bash, rss 3 MB) because my command line contained
+# the path, plus the serve's tailwind and esbuild sidecars -- so `head -1` had a
+# 3-in-4 chance of a wrong process, and the one it picked made the pessimistic
+# figure look ~300 MB WORSE than it is. ⭐ Sixth instance today of matching a
+# string I also typed, and the FIRST that pointed toward false alarm rather than
+# false comfort.
+# ✅ Enumerate by comm, then confirm with a kernel fact the shell cannot fake.
+SERVE_PEAK_MB=2768   # its observed high-water mark tonight
+serve_rss=0; serve_pid=""
+for p in $(pgrep -x beam.smp); do
+  case "$(readlink "/proc/$p/cwd" 2>/dev/null)" in
+    *commonplace-serve-pin) serve_pid=$p; serve_rss=$(awk '/VmRSS/{print int($2/1024)}' "/proc/$p/status" 2>/dev/null) ;;
+  esac
+done
+if [ -n "$serve_pid" ]; then
+  pessimistic=$((available - (SERVE_PEAK_MB - serve_rss)))
+else
+  pessimistic=$available
+fi
+
 echo "  available MB : $available   (danger < $DANGER_AVAILABLE_MB)"
+if [ -n "$serve_pid" ]; then
+  echo "  serve rss MB : $serve_rss   (pid $serve_pid, by comm+cwd -- never by pattern)"
+  echo "  PESSIMISTIC  : $pessimistic   <- headroom if the serve faults back to ${SERVE_PEAK_MB}MB"
+else
+  echo "  serve rss MB : NOT FOUND -- pessimistic figure unavailable, treating available as-is"
+fi
 echo "  load1        : $load1   (crowded > $CROWDED_LOAD1 -- timing-sensitive results only)"
 echo "  real suites  : $suites"
 echo "  BEAMs        : $beams   <- the control: proof the instrument can see anything"
@@ -57,6 +92,12 @@ echo "  BEAMs        : $beams   <- the control: proof the instrument can see any
 # neighbours.
 echo "  (suites is a FLOOR: a suite that has not yet spawned its BEAM is real load and not counted)"
 
+if [ "$pessimistic" -lt "$DANGER_AVAILABLE_MB" ]; then
+  echo "VERDICT: DO NOT START -- pessimistic headroom ${pessimistic}MB is below ${DANGER_AVAILABLE_MB}MB," >&2
+  echo "         even though available reads ${available}MB. The serve can take the difference back." >&2
+  echo "VERDICT: DO NOT START -- pessimistic headroom ${pessimistic}MB is below ${DANGER_AVAILABLE_MB}MB."
+  exit 1
+fi
 if [ "$available" -lt "$DANGER_AVAILABLE_MB" ]; then
   echo "VERDICT: DO NOT START -- available ${available}MB is below the ${DANGER_AVAILABLE_MB}MB danger line." >&2
   echo "VERDICT: DO NOT START -- available ${available}MB is below the ${DANGER_AVAILABLE_MB}MB danger line."

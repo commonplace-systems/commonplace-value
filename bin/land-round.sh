@@ -160,6 +160,18 @@ capture_executed() { # capture_executed <names-file> <test-command...>
   # ⚠️ This does NOT reintroduce two sources of truth: the runs answer DIFFERENT
   # questions. Plain decides pass/fail; traced enumerates. Both must pass.
 
+  # ⭐⭐ SAMPLE THE BOX *DURING* THE RUN, NOT AT THE ENDS. commonplace-yelixer took 174
+  # samples across one run: pre-flight 4286 MB, post-run 4351 MB, MINIMUM 934 MB --
+  # 566 MB below the danger line, in a window a before/after pair would have
+  # certified as clean. ⇒ A PRE-FLIGHT ANSWERS "MAY I START". ONLY SAMPLING ANSWERS
+  # "WHAT DID MY RUN DO TO THE BOX." It is the extension of my own rule that the
+  # MINIMUM is the number that matters -- and the minimum is unobtainable from the
+  # ends. Costs one background shell and a file.
+  local sample_file sampler_pid box_min
+  sample_file=$(mktemp); CLEANUP_FILES+=("$sample_file")
+  ( while :; do awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo >> "$sample_file"; sleep 2; done ) &
+  sampler_pid=$!
+
   # ── 1. THE VERDICT RUN: plain, with real timeouts and real concurrency ──────
   verdict_file=$(mktemp); CLEANUP_FILES+=("$verdict_file")
   "$@" >"$verdict_file" 2>&1 || rc=$?
@@ -186,6 +198,17 @@ capture_executed() { # capture_executed <names-file> <test-command...>
   # it from a cost into the thing that IDENTIFIES the class.
   trace_file=$(mktemp); CLEANUP_FILES+=("$trace_file")
   "$@" --trace >"$trace_file" 2>&1 || trace_rc=$?
+
+  # ⭐ Stop sampling and report the MINIMUM the box reached while I was running.
+  # Kill BY CAPTURED PID -- never a pattern; a waiter or killer built on a pattern
+  # that appears in its own argv is the trap this repo has hit four times today.
+  kill "$sampler_pid" 2>/dev/null; wait "$sampler_pid" 2>/dev/null
+  box_min=$(sort -n "$sample_file" | head -1)
+  echo "box: available MB minimum DURING this run = ${box_min:-unknown} (samples: $(grep -c . "$sample_file" || echo 0))"
+  if [ -n "$box_min" ] && [ "$box_min" -lt 1500 ]; then
+    echo "box: ⚠️ THAT IS BELOW THE 1500 MB DANGER LINE. This run contributed to a dip a" >&2
+    echo "box:   pre-flight could not have seen. Report it; do not read the result as clean." >&2
+  fi
 
   if [ "$rc" -ne 0 ]; then
     if [ "$trace_rc" -eq 0 ]; then

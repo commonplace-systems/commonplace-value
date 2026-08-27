@@ -123,6 +123,41 @@ for want in 'CONFLICTED' 'IN PROGRESS' 'git merge --abort' 'resolve on the branc
   grep -qF -- "$want" "$T/out.conflict" || { echo "  FAIL CONF  refusal text missing: $want"; fail=1; }
 done
 
+# ── DISCRIMINATOR ARMS: does capture_executed CLASSIFY a plain/trace disagreement? ──
+# ⛔ WHY THESE ARE ARMS AND NOT A ONE-OFF DEMO. I proved the classification once with
+# hand-written stubs. commonplace-markdown and commonplace-cell both refused to land
+# the same branch on the grounds that it had never been SEEN TO FIRE, and they are
+# right that reasoned-about and watched-working are different objects. ⭐ A stub demo
+# run once is a demonstration; the same stub run by a gate on every landing is an arm.
+# The real function is sourced out of land-round.sh, so this exercises the shipped
+# code path rather than a copy of it.
+# ⚠️ STATED BOUNDARY: this proves the CLASSIFICATION LOGIC on synthetic rc values. It
+# does not prove that a real ExUnit timeout travels through the whole wiring -- both
+# halves of that are measured separately (plain rc 2 with TimeoutError vs traced rc 0,
+# on this tree) but their composition in one live landing is not yet watched.
+disc() {  # disc <label> <plain-rc> <trace-rc> <expected-substring>
+  local label="$1" prc="$2" trc="$3" want="$4" out rc=0
+  ( set +u
+    CLEANUP_FILES=()
+    # shellcheck disable=SC1090
+    source <(sed -n '/^capture_executed()/,/^}/p' "$OLDPWD/bin/land-round.sh")
+    n=$(mktemp)
+    capture_executed "$n" sh -c '
+      if [ "$1" = "--trace" ]; then printf "  * test a (M) [L#1]\n\n1 test, 0 failures\n"; exit '"$trc"';
+      else printf "\n1 test, 0 failures\n"; exit '"$prc"'; fi' _
+    rm -f "$n"
+  ) > "$T/disc.$label" 2>&1 || rc=$?
+  if grep -qF -- "$want" "$T/disc.$label"; then
+    echo "  ok   DISC  $label -> names the class"
+  else
+    echo "  FAIL DISC  $label -> expected [$want]"
+    sed 's/^/         | /' "$T/disc.$label"; fail=1
+  fi
+}
+disc plain-fails-trace-passes 2 0 "TIMING-OR-CONCURRENCY CLASS"
+disc both-fail               2 2 "NOT the trace class"
+disc trace-only-fails        0 3 "traced names run failed"
+
 echo "---"
 echo "gate invocations substituted: $n_gates"
 if [ "$fail" -eq 0 ]; then
