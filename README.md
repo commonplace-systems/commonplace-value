@@ -67,6 +67,9 @@ hashing without a consumer-selected domain. §22 makes additions to this surface
 
 Full assessment: `docs/spec-errata.md` **V15**.
 
+Gate coverage — which arms have been seen red, which rows are predicate-only, and the
+limits of each instrument: `docs/GATE-AUDIT.md`.
+
 ## How this repository works
 
 ⭐ **A claim about the spec and a claim about the code are different claims.**

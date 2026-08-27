@@ -290,6 +290,10 @@ CLEANUP_FILES+=("$executed_tests")   # ⛔ NOT a second trap -- see the cleanup(
 # ⛔ THE LOCK FIRST, THEN THE INTERLOCK. The queue is authoritative; the box check is
 # the safety interlock on top of it. Neither substitutes for the other, and three
 # doors read an empty box as permission from the ordering tonight.
+# ⭐ WHY THESE GATES ARE ORDERED AS THEY ARE, WHICH ARMS HAVE BEEN SEEN RED, AND WHICH
+# ROWS ARE PREDICATE-ONLY: docs/GATE-AUDIT.md. ⚠️ Read it before adding, removing or
+# REORDERING a gate -- it records that `require-slot` sits BELOW the merge and below the
+# branch guard, and what that costs. docs/spec-errata.md V16-V20 has the incidents.
 gate "require-slot" bash bin/require-slot.sh
 gate "pre-flight (box)" bash bin/preflight-host.sh
 sleep $(( RANDOM % 26 ))

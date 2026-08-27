@@ -28,6 +28,9 @@
 # Exit: 0 slot held · 76 no token.
 # ⛔ `-e` DELIBERATELY ABSENT -- see the other gates in this directory.
 set -uo pipefail
+# ⚠️ THE LIMITS OF THIS TOKEN ARE FILED, NOT REMEMBERED: docs/GATE-AUDIT.md (which
+# gates are proven, which are predicate-only) and docs/spec-errata.md V16 (this gate was
+# unreachable from every checkout but `main`, and absent from `main` when it mattered).
 cd "$(dirname "$0")/.."
 TOKEN=tmp/SLOT_GRANTED
 

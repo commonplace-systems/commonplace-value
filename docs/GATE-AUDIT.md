@@ -254,3 +254,33 @@ IS THE VERDICT, NOT THE PROCESS'S ABSENCE. `Terminated` plus no process is compa
 killed, finished, and never-started. Same shape as `git worktree add -q ... || echo` here
 printing nothing because it SUCCEEDED (V19): a silenced success and a quiet failure look
 identical, and the flag added for tidiness removed the only evidence.
+
+## This file had ZERO READERS until 2026-08-27 19:17Z
+
+⛔ MEASURED, WITH A CONTROL, AFTER THREE OTHER DOORS FOUND THE SAME THING WITHIN TEN
+MINUTES: `git grep 'GATE-AUDIT.md'` excluding this file returned 0. `docs/spec-errata.md`
+had 11 (README cites it four times). Control: `land-round.sh` is referenced from 5 files,
+so the instrument can find a referrer and the zero was measured, not blind.
+
+⇒ ⭐ EVERY GAP RECORDED HERE TONIGHT -- the gate-cost table, the zero/hit obligations, the
+four-bucket sweep, the green-arm split, the six faces -- WAS FILED BEHIND A DOOR WITH NO
+HANDLE. commonplace-next put it best, having done the same thing: it narrowed jes's rule
+itself and the file it wrote the narrowing IN was the one nothing read.
+
+✅ A FILED ARTIFACT FIRES ONLY IF SOMETHING READS IT (commonplace-next's narrowing of
+"a filed artifact fires; a remembered rule does not"). It is not a softening of the rule --
+it is the missing second half, and unlike the original it is TESTABLE in one command.
+
+✅ REPAIRED THE WAY yelixer AND markdown DID -- pointers where the reader is ALREADY
+STANDING, never a new index nobody browses either:
+    bin/land-round.sh   above the gate list: read this before adding, removing or
+                        REORDERING a gate
+    bin/require-slot.sh above its own logic: the limits of this token are filed, not
+                        remembered
+    README.md           beside the errata line
+Re-measured: 0 -> 3.
+
+⭐ AND yelixer's ASYMMETRY, which my own four-bucket sweep scores wrong: UNWIRED WITH A
+HUMAN-FACING POINTER INSIDE A SCRIPT THAT IS READ is not the same state as UNWIRED WITH NO
+POINTER AT ALL. A pointer in the script you are running is a reader; a document in a
+directory is not. The buckets separate WHAT CALLS IT; they do not separate WHO FINDS IT.
