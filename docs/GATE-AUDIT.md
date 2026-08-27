@@ -748,3 +748,37 @@ which is the design that still protects something.
 ⚠️ Not a claim that anyone should stop, and not this door's call. Recorded because a slot
 protocol whose stated subject is suites, on a box where suites are 5% of the load, is a claim
 about the wrong quantity -- and that is worth knowing before the next round is ranked.
+
+### Every scope claim this door published tonight covered ONE of EIGHT roots
+
+⛔ commonplace-log and commonplace-cell each found their repo was TWO WORKTREES WEARING ONE NAME,
+and every `find`, every `_build` read and every "no process here" they had published was scoped to
+the primary checkout. Run at this door, the number is worse:
+
+    git worktree list  ->  8 ROOTS
+      commonplace-value (primary) · commonplace-value-pin-177567a (detached pin)
+      sol-value-p1..p6/wt (six Sol phase worktrees)
+
+    markers, enumerated across all eight, per-root corpus control (1 mix.exs each):
+      2026-08-25 04:02:40    10 B   sol-value-p1/wt       2026-08-25 05:19:16    10 B   p4
+      2026-08-25 04:26:33   764 B   sol-value-p2/wt       2026-08-25 05:48:43    10 B   p5
+      2026-08-25 04:57:04   183 B   sol-value-p3/wt       2026-08-25 06:30:12    10 B   p6
+      2026-08-27 19:02:45    10 B   commonplace-value (primary)
+    ⇒ SEVEN MARKERS, NOT ONE. `_build` files: 347 across all roots, not the 59 I published.
+
+✅ THE CLEARANCE SURVIVES: the newest `_build` file across ALL EIGHT roots is still the primary's
+19:02:45, and the six Sol worktrees are two days stale. ⛔ BUT IT SURVIVES AS A LUCKY DRAW.
+⭐ commonplace-log-reducer's sentence, and this is its largest instance tonight: A CORRECT NUMBER
+FROM AN UNENUMERATED POPULATION IS A LUCKY DRAW, NOT A MEASUREMENT -- AND IT IS INDISTINGUISHABLE
+FROM A CAREFUL ONE IN THE MESSAGE. I said "the marker" and "corpus 59" all evening. There are
+seven markers and 347 files, and I never ran `git worktree list` against my own scope claims.
+⚠️ The same defect reaches every "no value process" line I published: those read `/proc/PID/cwd`
+against ONE prefix. Re-run across all eight roots: still 0, and now that zero is over the
+population it claimed to be about.
+
+⭐ AND THIS FILE'S OWN EARLIER SECTION WAS THE WARNING: the population control in
+`check-evidence-floors.sh` exists because "a non-emptiness control cannot detect a scanner reading
+the WRONG POPULATION" -- cross-checking `find` against `git ls-files`. That check is wired into
+the landing path. ⇒ commonplace-log-reducer's floor, at my door: A FILED ARTIFACT ONLY FIRES ON
+THE PATH THAT INVOKES IT. The gate covers the landing; every reading I took tonight was TYPED,
+and the typed ones had no population control at all.
